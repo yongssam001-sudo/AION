@@ -197,7 +197,7 @@
         </div>
 
         <div class="header-right">
-            <span id="syncStatus" class="status-badge status-sync">✅ 로컬 데이터 로드 완료</span>
+            <span id="syncStatus" class="status-badge status-sync">✅ 데이터 연결 준비 완료</span>
             <div class="search-box-container">
                 <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()">
             </div>
@@ -331,7 +331,7 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz6ZDz3rf15-q9oAWzW6ZJSXhG3Smztt4NHsAqGeZlrWOZIXUI3BW1h-77o7S3j8PinwA/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsxfe7Fd6wdfOEemKo3H_gOW0QSaoqwabewh4aol4fHLRooTUCy80qcp0pT_gjWrDLLw/exec";
 
     let companies = [];
     let products = [];
@@ -451,8 +451,8 @@
                         return p;
                     });
                     
-                    // [🛠️ 버그 수정 핵심 1]: 백엔드에서 가져온 업체명(company)을 명확하게 파싱 및 동기화 처리
-                    const uniqueCompanies = [...new Set(products.map(p => p.company).filter(c => c && c !== "-"))];
+                    // [🛠️ 버그 해결 1]: 구글 시트에서 받아온 데이터 구조 정형화 및 공백 제거 처리
+                    const uniqueCompanies = [...new Set(products.map(p => p.company ? String(p.company).trim() : "").filter(c => c && c !== "-" && c !== ""))];
                     companies = uniqueCompanies.sort();
                     
                     localStorage.setItem('md_cached_companies', JSON.stringify(companies));
@@ -549,6 +549,7 @@
         listContainer.innerHTML = `<li class="company-item ${currentSelectedCompany === 'all' ? 'active' : ''}" onclick="selectCompany('all', this)"><span style="flex-grow:1; text-align:left;">전체 업체 보기</span></li>`;
         
         companies.forEach(comp => {
+            if (!comp || comp === "-") return;
             const li = document.createElement('li');
             li.className = `company-item ${currentSelectedCompany === comp ? 'active' : ''}`;
             li.onclick = function(e) { 
@@ -657,6 +658,7 @@
                 </select>
             `;
 
+            // [🛠️ 버그 해결 2]: 1.gs 시트 매핑 기준에 맞춰 인덱스 열 밀림 현상 밀착 교정
             const cModel = row.insertCell(6); cModel.className = "model-cell"; cModel.contentEditable = "true"; cModel.innerText = prod.modelName || "-";
             cModel.title = prod.modelName || "-";
             cModel.onkeydown = handlePreventEnter;
@@ -789,12 +791,35 @@
         sendDataToSheets({ action: "renameBrand", oldName: oldName, newName: newName.trim() }, () => fetchDataFromSheets(false));
     }
 
+    // [🛠️ 버그 해결 3]: 신규 업체 등록 즉시 가상 더미 데이터를 주입해 새로고침 시에도 소실 및 누락 방지 조치
     function addCompanyPrompt() {
         const name = prompt("추가할 새로운 업체명을 입력하세요:");
         if (!name || name.trim() === "") return;
-        if (!companies.includes(name.trim())) {
-            companies.push(name.trim());
+        const cleanName = name.trim();
+        
+        if (!companies.includes(cleanName)) {
+            companies.push(cleanName);
+            companies.sort();
+            
+            const dummyId = "temp_comp_" + Date.now();
+            const dummyItem = {
+                id: dummyId, brand: "-", company: cleanName, sabangCode: "-", status: "공급중",
+                modelName: "공통", productName: "거래처 메모 기록용", costPrice: 0, sellPrice: 0,
+                closedPrice: 0, consumerPrice: 0, note: "신규 등록 업체", productLink: "-"
+            };
+            products.unshift(dummyItem);
+            
+            localStorage.setItem('md_cached_companies', JSON.stringify(companies));
+            localStorage.setItem('md_cached_products', JSON.stringify(products));
+            
             renderSidebar();
+            selectCompany(cleanName, null);
+            
+            sendDataToSheets({ action: "add", product: dummyItem }, () => {
+                fetchDataFromSheets(false);
+            });
+        } else {
+            selectCompany(cleanName, null);
         }
     }
 
@@ -845,7 +870,6 @@
         }
     }
 
-    // [🛠️ 버그 수정 핵심 2]: 엑셀 다운로드 양식의 헤더 개수 구조를 표와 완벽하게 1:1 대응하도록 리모델링
     function downloadTemplateXLSX() {
         const headers = ["브랜드명", "업체명", "사방넷코드", "상태(공급중/품절/단종)", "모델명", "상품명", "공급가", "온라인판매가", "폐쇄몰판매가", "소비자가", "비고"];
         const sampleRow = ["예시브랜드", "예시공급사", "SB-SAMPLE", "공급중", "MODEL-A", "샘플 상품명", 10000, 15000, 13500, 20000, "양식테스트"];
@@ -856,7 +880,6 @@
         XLSX.writeFile(workbook, "상품대량등록_양식.xlsx");
     }
 
-    // [🛠️ 버그 수정 핵심 3]: 엑셀에서 추출한 배열 원소를 백엔드로 송출 시 밀림 없이 순서 그대로 12개 풀옵션 바인딩
     function uploadTemplateXLSX(input) {
         const file = input.files[0];
         if (!file) return;
@@ -896,7 +919,6 @@
                         continue;
                     }
                 }
-                // 1.gs가 완벽 파싱하도록 폐쇄몰마진율 등 빠짐없이 원본 형태를 맞춘 12컬럼 풀라인 매핑
                 rowsToSend.push([brand, company, sabangCode, status, modelName, productName, costPrice, sellPrice, closedPrice, consumerPrice, note, "-"]);
             }
 
