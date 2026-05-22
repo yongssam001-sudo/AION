@@ -213,7 +213,7 @@
                 <col style="width: 85px;">
                 <col style="width: 80px;">
                 <col style="width: 75px;">
-                <col style="width: 100px;">
+                <col style="width: 120px;">
                 <col style="width: 315px;"> 
                 <col style="width: 80px;">
                 <col style="width: 80px;">
@@ -330,7 +330,8 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/library/d/1ecXL9BpOViRp5_14aZX48DofIc2UuZHAHLRSZwBT_jK2dlU7POcrUQk7/7";
+    // ⚠️ [CORS 필수 점검]: 여기에 반드시 구글 앱스 스크립트 '웹앱 배포 주소'(/exec로 끝나는 주소)를 정확하게 넣으셔야 합니다!
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNRWvA4epU0V2idt8mlVzs57lL3KtM2QVSPvwIn1JjdoQ1Z5GAsdzLWn191LWX4vtWAA/exec";
 
     let companies = [];
     let products = [];
@@ -359,6 +360,7 @@
 
     function setStatus(type, message) {
         const badge = document.getElementById('syncStatus');
+        if(!badge) return;
         badge.innerText = message;
         if (type === 'sync') badge.className = "status-badge status-sync";
         else if (type === 'saving') badge.className = "status-badge status-saving";
@@ -374,7 +376,6 @@
         });
     }
 
-    // [🛠️ 버그 수정 핵심 1]: 순차 동기식(async/await) 일괄 삭제 구조 도입
     async function deleteSelectedProducts() {
         const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -388,32 +389,27 @@
             const checkedArray = Array.from(checkedBoxes);
             let deletedCount = 0;
 
-            // 순차적으로 하나씩 서버에 삭제를 요청하여 구글 스크립트 충돌 방지
             for (const cb of checkedArray) {
                 const tr = cb.closest('tr');
                 if (!tr) continue;
                 
                 const id = tr.getAttribute('data-id');
                 if (String(id).startsWith("temp_")) {
-                    // 아직 임시 ID인 상태는 화면에서만 바로 제거
                     products = products.filter(p => String(p.id) !== String(id));
                     tr.remove();
                     deletedCount++;
                     continue;
                 }
 
-                // 로컬 배열에서 즉시 제거 및 화면 행 흐리게 처리
                 products = products.filter(p => String(p.id) !== String(id));
                 tr.style.opacity = "0.3";
 
                 try {
-                    // 비동기 통신을 동기식으로 대기(await)
                     await fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         body: JSON.stringify({ action: "delete", id: id })
                     });
-                    
-                    tr.remove(); // 구글 시트 삭제 완결 시 HTML 노드 영구 삭제
+                    tr.remove();
                     deletedCount++;
                     setStatus('saving', `🗑️ 구글 시트 반영 중 (${deletedCount} / ${checkedArray.length})...`);
                 } catch (err) {
@@ -421,7 +417,6 @@
                 }
             }
 
-            // 전체 완료 처리 후 리프레시
             setStatus('sync', "✅ 선택 항목 일괄 삭제 완료");
             document.getElementById('selectAllCheckbox').checked = false;
             localStorage.setItem('md_cached_products', JSON.stringify(products));
@@ -433,10 +428,14 @@
         const cachedCompanies = localStorage.getItem('md_cached_companies');
         const cachedProducts = localStorage.getItem('md_cached_products');
         if (cachedCompanies && cachedProducts) {
-            companies = JSON.parse(cachedCompanies);
-            products = JSON.parse(cachedProducts);
-            renderSidebar();
-            renderTable();
+            try {
+                companies = JSON.parse(cachedCompanies);
+                products = JSON.parse(cachedProducts);
+                renderSidebar();
+                renderTable();
+            } catch(e) {
+                console.error("캐시 로드 실패", e);
+            }
         }
     }
 
@@ -456,7 +455,7 @@
                         return p;
                     });
                     
-                    const uniqueCompanies = [...new Set(products.map(p => p.company).filter(c => c && c !== "-"))];
+                    const uniqueCompanies = [...new Set(products.map(p => String(p.company || '').trim()).filter(c => c && c !== "-"))];
                     companies = uniqueCompanies.sort();
                     
                     localStorage.setItem('md_cached_companies', JSON.stringify(companies));
@@ -526,7 +525,7 @@
                 const index = products.findIndex(p => String(p.id) === String(tempId));
                 if (index !== -1) {
                     products[index].id = result.id;
-                    if(products[index].productName === "신규 상품 (저장 중...)") {
+                    if(String(products[index].productName) === "신규 상품 (저장 중...)") {
                         products[index].productName = "신규 상품";
                     }
                 }
@@ -535,9 +534,8 @@
                 if(tempRow) {
                     tempRow.setAttribute("data-id", result.id);
                     const delBtn = tempRow.querySelector('.btn-delete');
-                    if(delBtn) {
-                        delBtn.setAttribute("onclick", `deleteProduct('${result.id}')`);
-                    }
+                    if(delBtn) delBtn.setAttribute("onclick", `deleteProduct('${result.id}')`);
+                    
                     const nameCell = tempRow.querySelector('.name-cell');
                     if(nameCell && nameCell.innerText === "신규 상품 (저장 중...)") {
                         nameCell.innerText = "신규 상품";
@@ -550,6 +548,7 @@
 
     function renderSidebar() {
         const listContainer = document.getElementById("companyList");
+        if(!listContainer) return;
         listContainer.innerHTML = `<li class="company-item ${currentSelectedCompany === 'all' ? 'active' : ''}" onclick="selectCompany('all', this)"><span style="flex-grow:1; text-align:left;">전체 업체 보기</span></li>`;
         
         companies.forEach(comp => {
@@ -588,13 +587,20 @@
 
     function renderTable() {
         const tbody = document.getElementById("productTable").getElementsByTagName('tbody')[0];
+        if(!tbody) return;
         tbody.innerHTML = "";
         const fragment = document.createDocumentFragment();
         let visibleIndex = 1; 
 
         products.forEach(prod => {
-            if (prod.productName === "거래처 메모 기록용" || prod.modelName === "공통") return;
-            if (currentSelectedCompany !== 'all' && prod.company !== currentSelectedCompany) return;
+            // [💡 핵심 보완]: 숫자가 주어져도 예외 없이 안전하게 문자로 변환 처리 (trim 오류 해결)
+            const pName = String(prod.productName || '').trim();
+            const mName = String(prod.modelName || '').trim();
+            const bName = String(prod.brand || '').trim();
+            const cNameStr = String(prod.company || '').trim();
+
+            if (pName === "거래처 메모 기록용" || mName === "공통") return;
+            if (currentSelectedCompany !== 'all' && cNameStr !== currentSelectedCompany) return;
             if (currentSelectedStatus !== 'all' && prod.status !== currentSelectedStatus) return;
 
             const row = document.createElement('tr');
@@ -612,11 +618,11 @@
 
             const cNum = row.insertCell(1); cNum.className = "num-cell"; cNum.innerText = visibleIndex++;
             
-            const cBrand = row.insertCell(2); cBrand.className = "brand-cell"; cBrand.contentEditable = "true"; cBrand.innerText = prod.brand || "-";
+            const cBrand = row.insertCell(2); cBrand.className = "brand-cell"; cBrand.contentEditable = "true"; cBrand.innerText = bName || "-";
             cBrand.onkeydown = handlePreventEnter;
             cBrand.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "brand", value: this.innerText.trim() }); };
 
-            const cComp = row.insertCell(3); cComp.className = "company-cell"; cComp.contentEditable = "true"; cComp.innerText = prod.company || "-";
+            const cComp = row.insertCell(3); cComp.className = "company-cell"; cComp.contentEditable = "true"; cComp.innerText = cNameStr || "-";
             cComp.onkeydown = handlePreventEnter;
             cComp.onfocus = function() { oldCompanyValue = this.innerText.trim(); };
             cComp.onblur = function() { 
@@ -635,7 +641,7 @@
                 if (newVal === oldSabangValue) return;
 
                 if (newVal !== "" && newVal !== "-") {
-                    const isDuplicate = products.some(p => String(p.id) !== String(currentId) && p.sabangCode === newVal && p.productName !== "거래처 메모 기록용");
+                    const isDuplicate = products.some(p => String(p.id) !== String(currentId) && String(p.sabangCode).trim() === newVal && String(p.productName).trim() !== "거래처 메모 기록용");
                     if (isDuplicate) {
                         alert(`⚠️ [중복 오류] 사방넷코드 '${newVal}'은 이미 사용 중입니다.`);
                         this.innerText = oldSabangValue; 
@@ -661,8 +667,8 @@
                 </select>
             `;
 
-            const cModel = row.insertCell(6); cModel.className = "model-cell"; cModel.contentEditable = "true"; cModel.innerText = prod.modelName || "-";
-            cModel.title = prod.modelName || "-";
+            const cModel = row.insertCell(6); cModel.className = "model-cell"; cModel.contentEditable = "true"; cModel.innerText = mName || "-";
+            cModel.title = mName || "-";
             cModel.onkeydown = handlePreventEnter;
             cModel.onblur = function() { 
                 const val = this.innerText.trim();
@@ -670,8 +676,8 @@
                 sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "modelName", value: val }); 
             };
 
-            const cName = row.insertCell(7); cName.className = "name-cell"; cName.style.textAlign = "left"; cName.contentEditable = "true"; cName.innerText = prod.productName || "-";
-            cName.title = prod.productName || "-";
+            const cName = row.insertCell(7); cName.className = "name-cell"; cName.style.textAlign = "left"; cName.contentEditable = "true"; cName.innerText = pName || "-";
+            cName.title = pName || "-";
             cName.onkeydown = handlePreventEnter;
             cName.onblur = function() { 
                 const val = this.innerText.trim();
@@ -727,8 +733,7 @@
             cNote.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "note", value: this.innerText.trim() }); };
 
             const cLink = row.insertCell(15);
-            const searchStr = prod.productName ? prod.productName.trim() : "";
-            cLink.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query=' + encodeURIComponent('${searchStr.replace(/'/g, "\\'")}'), '_blank')">🔍 검색</button>`;
+            cLink.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query=' + encodeURIComponent('${pName.replace(/'/g, "\\'")}'), '_blank')">🔍 검색</button>`;
 
             const cDel = row.insertCell(16);
             cDel.innerHTML = `<button class="btn-delete" onclick="deleteProduct('${prod.id}')">삭제</button>`;
@@ -764,7 +769,6 @@
         renderTable(); 
     }
 
-    // [🛠️ 버그 수정 핵심 2]: 개별 삭제 버튼 동작 시 HTML 노드와 시트 동기화 처리 완벽 최적화
     function deleteProduct(id) {
         if (String(id).startsWith("temp_")) {
             alert("⚠️ 현재 상품이 시트에 안전하게 등록 처리 중입니다. 1~2초 후 다시 시도해 주세요.");
@@ -773,19 +777,15 @@
 
         if (confirm("이 상품을 화면과 구글 시트에서 정말 삭제하시겠습니까?")) {
             const row = document.querySelector(`tr[data-id="${id}"]`);
-            if(row) {
-                row.style.opacity = "0.3"; // 처리 중 시각 피드백 제공
-            }
+            if(row) row.style.opacity = "0.3";
             
-            // 로컬 데이터 선반영
             products = products.filter(p => String(p.id) !== String(id));
             localStorage.setItem('md_cached_products', JSON.stringify(products));
 
-            // 구글 시트에 즉시 동기화 요청 전송 후 콜백으로 HTML 노드 영구 삭제
             sendDataToSheets({ action: "delete", id: id }, (res) => {
                 if(row) row.remove();
                 setStatus('sync', "✅ 구글 스프레드시트 삭제 완료");
-                renderTable(); // No. 넘버링 정렬을 위한 리렌더링
+                renderTable(); 
             });
         }
     }
@@ -893,7 +893,7 @@
                 const note = row[10] ? String(row[10]).trim() : "-";
 
                 if (sabangCode !== "" && sabangCode !== "-") {
-                    const existsInCurrent = products.some(p => p.sabangCode === sabangCode && p.productName !== "거래처 메모 기록용");
+                    const existsInCurrent = products.some(p => String(p.sabangCode).trim() === sabangCode && String(p.productName).trim() !== "거래처 메모 기록용");
                     const existsInBatch = rowsToSend.some(r => r[2] === sabangCode);
                     
                     if (existsInCurrent || existsInBatch) {
@@ -998,10 +998,11 @@
 
     function refreshNoteList() {
         const listContainer = document.getElementById('noteListBox');
+        if(!listContainer) return;
         listContainer.innerHTML = '';
 
-        const companyMemos = products.filter(p => p.company === ActiveNoteTargetCompany && 
-            (p.productName === "거래처 메모 기록용" || p.modelName === "공통") && p.note && p.note.trim() !== '-');
+        const companyMemos = products.filter(p => String(p.company).trim() === ActiveNoteTargetCompany && 
+            (String(p.productName).trim() === "거래처 메모 기록용" || String(p.modelName).trim() === "공통") && p.note && String(p.note).trim() !== '-');
 
         if(companyMemos.length === 0) {
             listContainer.innerHTML = `<div class="note-empty">등록된 거래처 특이사항이 없습니다.</div>`;
@@ -1025,6 +1026,7 @@
 
     function addNoteDirectly() {
         const inputEl = document.getElementById('newNoteInput');
+        if(!inputEl) return;
         const content = inputEl.value.trim();
         if(!content) return;
 
