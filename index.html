@@ -196,7 +196,7 @@
         </div>
 
         <div class="header-right">
-            <span id="syncStatus" class="status-badge status-sync">✅ 로컬 데이터 로드 완료</span>
+            <span id="syncStatus" class="status-badge status-sync">✅ 데이터 로드 완료</span>
             <div class="search-box-container">
                 <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()">
             </div>
@@ -330,8 +330,8 @@
 </div>
 
 <script>
-    // ⚠️ [CORS 필수 점검]: 여기에 반드시 구글 앱스 스크립트 '웹앱 배포 주소'(/exec로 끝나는 주소)를 정확하게 넣으셔야 합니다!
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz083XVcsHEv7yebJo935aejTo6EngBFG5TE6AgC5SsERIX8qG1Oy3SQaypEuSyb9B9/exec";
+    // ⚠️ [구글 앱스 스크립트 웹앱 주소 확인]
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNRWvA4epU0V2idt8mlVzs57lL3KtM2QVSPvwIn1JjdoQ1Z5GAsdzLWn191LWX4vtWAA/exec";
 
     let companies = [];
     let products = [];
@@ -405,8 +405,11 @@
                 tr.style.opacity = "0.3";
 
                 try {
+                    // 💡 [수정] 구글 Redirect 우회 적용 및 CORS 모드 탑재
                     await fetch(GAS_WEB_APP_URL, {
                         method: "POST",
+                        mode: "cors",
+                        redirect: "follow",
                         body: JSON.stringify({ action: "delete", id: id })
                     });
                     tr.remove();
@@ -442,42 +445,50 @@
     function fetchDataFromSheets(isManual = false, callback = null) {
         if(isManual) setStatus('saving', "🔄 최신 데이터 동기화 중...");
         
-        fetch(GAS_WEB_APP_URL)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("시트 에러 발생: " + data.error);
-                } else {
-                    products = data.products || [];
-                    products = products.map(p => {
-                        if (p.closedPrice === undefined) p.closedPrice = 0;
-                        if (!p.status) p.status = "공급중";
-                        return p;
-                    });
-                    
-                    const uniqueCompanies = [...new Set(products.map(p => String(p.company || '').trim()).filter(c => c && c !== "-"))];
-                    companies = uniqueCompanies.sort();
-                    
-                    localStorage.setItem('md_cached_companies', JSON.stringify(companies));
-                    localStorage.setItem('md_cached_products', JSON.stringify(products));
-                    
-                    renderSidebar();
-                    renderTable();
-                    setStatus('sync', "🟢 실시간 동기화 완료");
-                    
-                    if (callback) callback();
-                }
-            })
-            .catch(err => {
-                setStatus('sync', "⚠️ 오프라인 모드 (연결 확인 필요)");
-            });
+        // 💡 [수정] GET 통신 시 리다이렉트 추적 옵션 추가 (CORS 솔루션)
+        fetch(GAS_WEB_APP_URL, {
+            method: "GET",
+            redirect: "follow"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert("시트 에러 발생: " + data.error);
+            } else {
+                products = data.products || [];
+                products = products.map(p => {
+                    if (p.closedPrice === undefined) p.closedPrice = 0;
+                    if (!p.status) p.status = "공급중";
+                    return p;
+                });
+                
+                const uniqueCompanies = [...new Set(products.map(p => String(p.company || '').trim()).filter(c => c && c !== "-"))];
+                companies = uniqueCompanies.sort();
+                
+                localStorage.setItem('md_cached_companies', JSON.stringify(companies));
+                localStorage.setItem('md_cached_products', JSON.stringify(products));
+                
+                renderSidebar();
+                renderTable();
+                setStatus('sync', "🟢 데이터 실시간 동기화 완료");
+                
+                if (callback) callback();
+            }
+        })
+        .catch(err => {
+            console.error("데이터 패치 실패:", err);
+            setStatus('sync', "⚠️ 네트워크 연결 상태 확인 필요");
+        });
     }
 
     function sendDataToSheets(payload, callback) {
         setStatus('saving', "☁️ 변경사항 실시간 저장 중...");
         
+        // 💡 [수정] POST 연동 시 구글 CORS 통과 전용 설정 (헤더 제거 및 리다이렉트 처리)
         fetch(GAS_WEB_APP_URL, {
             method: "POST",
+            mode: "cors",
+            redirect: "follow",
             body: JSON.stringify(payload)
         })
         .then(res => res.json())
@@ -486,6 +497,7 @@
             else setStatus('sync', "✅ 모든 변경사항 저장됨");
         })
         .catch(err => {
+            console.error("저장 실패 상세:", err);
             setStatus('sync', "❌ 저장 실패");
         });
     }
@@ -593,11 +605,11 @@
         let visibleIndex = 1; 
 
         products.forEach(prod => {
-            // [💡 핵심 보완]: 숫자가 주어져도 예외 없이 안전하게 문자로 변환 처리 (trim 오류 해결)
-            const pName = String(prod.productName || '').trim();
-            const mName = String(prod.modelName || '').trim();
-            const bName = String(prod.brand || '').trim();
-            const cNameStr = String(prod.company || '').trim();
+            // 💡 [수정] 데이터 유실 및 타입 불일치 방지 안정화 바인딩 (.trim() 예외 완벽 제거)
+            const pName = String(prod.productName !== undefined && prod.productName !== null ? prod.productName : '').trim();
+            const mName = String(prod.modelName !== undefined && prod.modelName !== null ? prod.modelName : '').trim();
+            const bName = String(prod.brand !== undefined && prod.brand !== null ? prod.brand : '').trim();
+            const cNameStr = String(prod.company !== undefined && prod.company !== null ? prod.company : '').trim();
 
             if (pName === "거래처 메모 기록용" || mName === "공통") return;
             if (currentSelectedCompany !== 'all' && cNameStr !== currentSelectedCompany) return;
@@ -643,7 +655,7 @@
                 if (newVal !== "" && newVal !== "-") {
                     const isDuplicate = products.some(p => String(p.id) !== String(currentId) && String(p.sabangCode).trim() === newVal && String(p.productName).trim() !== "거래처 메모 기록용");
                     if (isDuplicate) {
-                        alert(`⚠️ [중복 오류] 사방넷코드 '${newVal}'은 이미 사용 중입니다.`);
+                        alert(`⚠️ [중복 코드 안내] 사방넷코드 '${newVal}'은 이미 배치되어 사용 중입니다.`);
                         this.innerText = oldSabangValue; 
                         return;
                     }
@@ -771,11 +783,11 @@
 
     function deleteProduct(id) {
         if (String(id).startsWith("temp_")) {
-            alert("⚠️ 현재 상품이 시트에 안전하게 등록 처리 중입니다. 1~2초 후 다시 시도해 주세요.");
+            alert("⚠️ 현재 새 항목이 동기화 처리 중입니다. 잠시 후 다시 조작해 주세요.");
             return;
         }
 
-        if (confirm("이 상품을 화면과 구글 시트에서 정말 삭제하시겠습니까?")) {
+        if (confirm("이 상품을 화면과 구글 스프레드시트에서 정말 삭제하시겠습니까?")) {
             const row = document.querySelector(`tr[data-id="${id}"]`);
             if(row) row.style.opacity = "0.3";
             
@@ -905,24 +917,24 @@
             }
 
             if (duplicateSabangCodes.length > 0) {
-                alert(`❌ [대량 업로드 실패] 중복된 사방넷코드가 존재합니다.\n\n[중복 목록]\n${duplicateSabangCodes.slice(0, 5).join("\n")}${duplicateSabangCodes.length > 5 ? `\n외 ${duplicateSabangCodes.length - 5}건...` : ""}\n\n시트 내 코드를 수정 후 다시 업로드해 주세요.`);
+                alert(`❌ [대량 업로드 중단] 중복된 사방넷코드가 검출되었습니다.\n\n[중복 리스트]\n${duplicateSabangCodes.slice(0, 5).join("\n")}${duplicateSabangCodes.length > 5 ? `\n외 ${duplicateSabangCodes.length - 5}건...` : ""}\n\n코드를 가공한 뒤 재시도 하세요.`);
                 input.value = "";
                 return;
             }
 
             if (rowsToSend.length === 0) {
-                alert("업로드할 유효한 상품 데이터가 없습니다.");
+                alert("업로드할 유효한 상품 데이터가 존재하지 않습니다.");
                 input.value = "";
                 return;
             }
 
-            if (confirm(`${rowsToSend.length}개의 상품을 일괄 추가하시겠습니까?`)) {
-                setStatus('saving', "📤 대량 상품 시트 업로드 및 ID 매핑 중...");
+            if (confirm(`${rowsToSend.length}개의 상품을 시트에 대량 추가하시겠습니까?`)) {
+                setStatus('saving', "📤 대량 상품 시트 업로드 작업 중...");
                 
                 sendDataToSheets({ action: "uploadRows", rows: rowsToSend }, function(result) {
                     fetchDataFromSheets(false, () => {
-                        setStatus('sync', `✅ 대량 상품 ${rowsToSend.length}건 등록 및 고유 ID 생성 완료`);
-                        alert(`🎉 ${rowsToSend.length}개의 상품이 정상적으로 등록되었으며 실시간 삭제가 가능합니다.`);
+                        setStatus('sync', `✅ 대량 상품 ${rowsToSend.length}건 등록 완료`);
+                        alert(`🎉 ${rowsToSend.length}개의 상품이 정상적으로 가동 서버에 매핑되었습니다.`);
                     });
                 });
             }
@@ -948,7 +960,7 @@
         const sp = parseFloat(document.getElementById('sellingPrice').value);
 
         if(isNaN(supplyCost) || isNaN(sp)) {
-            alert("공급가와 예상판매가를 모두 입력해주세요.");
+            alert("공급가와 예상판매가를 정확히 기입하십시오.");
             return;
         }
 
@@ -1005,7 +1017,7 @@
             (String(p.productName).trim() === "거래처 메모 기록용" || String(p.modelName).trim() === "공통") && p.note && String(p.note).trim() !== '-');
 
         if(companyMemos.length === 0) {
-            listContainer.innerHTML = `<div class="note-empty">등록된 거래처 특이사항이 없습니다.</div>`;
+            listContainer.innerHTML = `<div class="note-empty">등록된 특이사항 기록이 비어있습니다.</div>`;
         } else {
             companyMemos.forEach(item => {
                 const itemDiv = document.createElement('div');
@@ -1051,7 +1063,7 @@
         const textSpan = parentItem.querySelector('.content-span');
         const oldTxt = textSpan.innerText;
         
-        const newTxt = prompt("특이사항 내용을 수정하세요:", oldTxt);
+        const newTxt = prompt("수정할 특이사항을 작성하십시오:", oldTxt);
         if (!newTxt || newTxt.trim() === '') return;
 
         const cleanTxt = newTxt.trim();
@@ -1064,7 +1076,7 @@
     }
 
     function deleteNoteDirectly(id) {
-        if(!confirm("이 특이사항 기록을 삭제하시겠습니까?")) return;
+        if(!confirm("이 특이사항 내역을 완전히 소멸시키겠습니까?")) return;
 
         const index = products.findIndex(p => String(p.id) === String(id));
         if(index !== -1) {
