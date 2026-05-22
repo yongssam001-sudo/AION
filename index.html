@@ -750,8 +750,9 @@
             cNote.onblur = function() { updateLocalAndServer(row.getAttribute("data-id"), "note", this.innerText); };
 
             const cLink = row.insertCell(15);
-            const searchStr = prod.productName ? prod.productName.trim() : "";
-            cLink.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query=' + encodeURIComponent('${searchStr.replace(/'/g, "\\'")}'), '_blank')">🔍 검색</button>`;
+// 💡 숫자가 들어와도 안전하게 문자로 변환 후 trim 처리
+const searchStr = prod.productName ? String(prod.productName).trim() : "";
+cLink.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query=' + encodeURIComponent('${searchStr.replace(/'/g, "\\'")}'), '_blank')">🔍 검색</button>`;
 
             const cDel = row.insertCell(16);
             cDel.innerHTML = `<button class="btn-delete" onclick="deleteProduct('${prod.id}')">삭제</button>`;
