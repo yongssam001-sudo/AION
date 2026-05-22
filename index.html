@@ -191,17 +191,14 @@
 </div>
     
 <div class="main-content" id="mainContent">
-<div class="header-container" style="display: flex; flex-direction: column; gap: 10px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px;">
-        <div class="header-top" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 id="currentViewTitle" style="margin:0;">통합 상품 가격 리스트</h2>
-            <span id="syncStatus" class="status-badge status-sync">✅ 데이터 연결 준비 완료</span>
-        </div>
-
-        <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
-            <div class="search-box-container" style="display: flex; align-items: center; background-color: #f8f9fa; padding: 5px 10px; border-radius: 4px; border: 1px solid #ced4da;">
-                <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()" style="border: none; outline: none; font-size: 12px; width: 200px; background: transparent;">
+    <div class="header-container">
+        <h2 id="currentViewTitle">통합 상품 리스트</h2>
+        <div class="header-right">
+            <span id="syncStatus">✅ 준비 완료</span>
+            <div class="search-box-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="검색..." oninput="renderTable()">
             </div>
-            <button class="btn-calc-trigger" onclick="openCalcModal()" style="background-color: #4b6584; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">📊 마진 계산기</button>
+            <button class="btn-calc-trigger" onclick="alert('마진 계산기')">📊 계산기</button>
         </div>
     </div>
 
