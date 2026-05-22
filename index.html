@@ -359,6 +359,7 @@
 
     function setStatus(type, message) {
         const badge = document.getElementById('syncStatus');
+        if (!badge) return;
         badge.innerText = message;
         if (type === 'sync') badge.className = "status-badge status-sync";
         else if (type === 'saving') badge.className = "status-badge status-saving";
@@ -374,7 +375,6 @@
         });
     }
 
-    // [🛠️ 버그 수정 핵심 1]: 순차 동기식(async/await) 일괄 삭제 구조 도입
     async function deleteSelectedProducts() {
         const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -388,32 +388,28 @@
             const checkedArray = Array.from(checkedBoxes);
             let deletedCount = 0;
 
-            // 순차적으로 하나씩 서버에 삭제를 요청하여 구글 스크립트 충돌 방지
             for (const cb of checkedArray) {
                 const tr = cb.closest('tr');
                 if (!tr) continue;
                 
                 const id = tr.getAttribute('data-id');
                 if (String(id).startsWith("temp_")) {
-                    // 아직 임시 ID인 상태는 화면에서만 바로 제거
                     products = products.filter(p => String(p.id) !== String(id));
                     tr.remove();
                     deletedCount++;
                     continue;
                 }
 
-                // 로컬 배열에서 즉시 제거 및 화면 행 흐리게 처리
                 products = products.filter(p => String(p.id) !== String(id));
                 tr.style.opacity = "0.3";
 
                 try {
-                    // 비동기 통신을 동기식으로 대기(await)
                     await fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         body: JSON.stringify({ action: "delete", id: id })
                     });
                     
-                    tr.remove(); // 구글 시트 삭제 완결 시 HTML 노드 영구 삭제
+                    tr.remove(); 
                     deletedCount++;
                     setStatus('saving', `🗑️ 구글 시트 반영 중 (${deletedCount} / ${checkedArray.length})...`);
                 } catch (err) {
@@ -421,7 +417,6 @@
                 }
             }
 
-            // 전체 완료 처리 후 리프레시
             setStatus('sync', "✅ 선택 항목 일괄 삭제 완료");
             document.getElementById('selectAllCheckbox').checked = false;
             localStorage.setItem('md_cached_products', JSON.stringify(products));
@@ -446,8 +441,8 @@
         fetch(GAS_WEB_APP_URL)
             .then(res => res.json())
             .then(data => {
-                if (data.error) {
-                    alert("시트 에러 발생: " + data.error);
+                if (data.error || data.result === "error") {
+                    alert("시트 에러 발생: " + (data.error || data.message));
                 } else {
                     products = data.products || [];
                     products = products.map(p => {
@@ -456,7 +451,7 @@
                         return p;
                     });
                     
-                    const uniqueCompanies = [...new Set(products.map(p => p.company).filter(c => c && c !== "-"))];
+                    const uniqueCompanies = [...new Set(products.map(p => p.company).filter(c => c && c !== "-" && p.productName !== "거래처 메모 기록용"))];
                     companies = uniqueCompanies.sort();
                     
                     localStorage.setItem('md_cached_companies', JSON.stringify(companies));
@@ -586,6 +581,30 @@
         renderTable();
     }
 
+    // 💡 [수정 편의 기능 추가] 금액 셀 클릭 시 포맷팅을 풀고 편집하도록 보완하는 헬퍼 함수들
+    function handlePriceFocus(cell) {
+        const numericValue = parseNumber(cell.innerText);
+        cell.innerText = numericValue === 0 ? "" : numericValue;
+    }
+
+    function updateLocalAndServer(rowId, field, rawValue, displaySuffix = "") {
+        let cleanValue = rawValue;
+        if (["costPrice", "sellPrice", "closedPrice", "consumerPrice"].includes(field)) {
+            cleanValue = parseNumber(rawValue);
+        } else {
+            cleanValue = rawValue.trim();
+        }
+
+        // 💡 [핵심 교정] 로컬 메모리 배열에 실시간 동기화하여 변경사항이 유지되도록 처리
+        const idx = products.findIndex(p => String(p.id) === String(rowId));
+        if (idx !== -1) {
+            products[idx][field] = cleanValue;
+            localStorage.setItem('md_cached_products', JSON.stringify(products));
+        }
+
+        sendDataToSheets({ action: "update", id: rowId, field: field, value: cleanValue });
+    }
+
     function renderTable() {
         const tbody = document.getElementById("productTable").getElementsByTagName('tbody')[0];
         tbody.innerHTML = "";
@@ -614,7 +633,7 @@
             
             const cBrand = row.insertCell(2); cBrand.className = "brand-cell"; cBrand.contentEditable = "true"; cBrand.innerText = prod.brand || "-";
             cBrand.onkeydown = handlePreventEnter;
-            cBrand.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "brand", value: this.innerText.trim() }); };
+            cBrand.onblur = function() { updateLocalAndServer(row.getAttribute("data-id"), "brand", this.innerText); };
 
             const cComp = row.insertCell(3); cComp.className = "company-cell"; cComp.contentEditable = "true"; cComp.innerText = prod.company || "-";
             cComp.onkeydown = handlePreventEnter;
@@ -622,7 +641,8 @@
             cComp.onblur = function() { 
                 const newVal = this.innerText.trim();
                 if(oldCompanyValue !== newVal) {
-                    sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "company", value: newVal }, () => fetchDataFromSheets(false));
+                    updateLocalAndServer(row.getAttribute("data-id"), "company", newVal);
+                    fetchDataFromSheets(false);
                 }
             };
 
@@ -642,9 +662,7 @@
                         return;
                     }
                 }
-                const idx = products.findIndex(p => String(p.id) === String(currentId));
-                if(idx !== -1) products[idx].sabangCode = newVal;
-                sendDataToSheets({ action: "update", id: currentId, field: "sabangCode", value: newVal }); 
+                updateLocalAndServer(currentId, "sabangCode", newVal);
             };
 
             const cStatus = row.insertCell(5);
@@ -667,7 +685,7 @@
             cModel.onblur = function() { 
                 const val = this.innerText.trim();
                 this.title = val;
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "modelName", value: val }); 
+                updateLocalAndServer(row.getAttribute("data-id"), "modelName", val);
             };
 
             const cName = row.insertCell(7); cName.className = "name-cell"; cName.style.textAlign = "left"; cName.contentEditable = "true"; cName.innerText = prod.productName || "-";
@@ -676,24 +694,27 @@
             cName.onblur = function() { 
                 const val = this.innerText.trim();
                 this.title = val;
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "productName", value: val }); 
+                updateLocalAndServer(row.getAttribute("data-id"), "productName", val);
             };
 
+            // 💡 금액 입력 편의 강화 반영된 부분
             const cCost = row.insertCell(8); cCost.className = "price"; cCost.contentEditable = "true"; cCost.innerText = (prod.costPrice || 0).toLocaleString() + '원';
             cCost.onkeydown = handlePreventEnter;
+            cCost.onfocus = function() { handlePriceFocus(this); };
             cCost.oninput = function() { recalculateRowMargins(row); }; 
             cCost.onblur = function() { 
                 const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "costPrice", value: val });
+                updateLocalAndServer(row.getAttribute("data-id"), "costPrice", String(val));
                 this.innerText = val.toLocaleString() + '원';
             };
 
             const cSell = row.insertCell(9); cSell.className = "price"; cSell.contentEditable = "true"; cSell.innerText = (prod.sellPrice || 0).toLocaleString() + '원';
             cSell.onkeydown = handlePreventEnter;
+            cSell.onfocus = function() { handlePriceFocus(this); };
             cSell.oninput = function() { recalculateRowMargins(row); };
             cSell.onblur = function() { 
                 const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "sellPrice", value: val });
+                updateLocalAndServer(row.getAttribute("data-id"), "sellPrice", String(val));
                 this.innerText = val.toLocaleString() + '원';
             };
 
@@ -703,10 +724,11 @@
 
             const cClosed = row.insertCell(11); cClosed.className = "price"; cClosed.contentEditable = "true"; cClosed.innerText = (prod.closedPrice || 0).toLocaleString() + '원';
             cClosed.onkeydown = handlePreventEnter;
+            cClosed.onfocus = function() { handlePriceFocus(this); };
             cClosed.oninput = function() { recalculateRowMargins(row); };
             cClosed.onblur = function() {
                 const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "closedPrice", value: val });
+                updateLocalAndServer(row.getAttribute("data-id"), "closedPrice", String(val));
                 this.innerText = val.toLocaleString() + '원';
             };
 
@@ -716,15 +738,16 @@
 
             const cCons = row.insertCell(13); cCons.className = "price"; cCons.contentEditable = "true"; cCons.innerText = (prod.consumerPrice || 0).toLocaleString() + '원';
             cCons.onkeydown = handlePreventEnter;
+            cCons.onfocus = function() { handlePriceFocus(this); };
             cCons.onblur = function() { 
                 const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "consumerPrice", value: val });
+                updateLocalAndServer(row.getAttribute("data-id"), "consumerPrice", String(val));
                 this.innerText = val.toLocaleString() + '원';
             };
 
             const cNote = row.insertCell(14); cNote.contentEditable = "true"; cNote.style.textAlign = "left"; cNote.innerText = prod.note || "-";
             cNote.onkeydown = handlePreventEnter;
-            cNote.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "note", value: this.innerText.trim() }); };
+            cNote.onblur = function() { updateLocalAndServer(row.getAttribute("data-id"), "note", this.innerText); };
 
             const cLink = row.insertCell(15);
             const searchStr = prod.productName ? prod.productName.trim() : "";
@@ -749,7 +772,10 @@
         else if (newVal === "단종") selectEl.classList.add('status-discontinued');
 
         const index = products.findIndex(p => String(p.id) === String(id));
-        if(index !== -1) products[index].status = newVal;
+        if(index !== -1) {
+            products[index].status = newVal;
+            localStorage.setItem('md_cached_products', JSON.stringify(products));
+        }
 
         sendDataToSheets({ action: "update", id: id, field: "status", value: newVal }, () => {
             if(currentSelectedStatus !== 'all') renderTable();
@@ -764,7 +790,6 @@
         renderTable(); 
     }
 
-    // [🛠️ 버그 수정 핵심 2]: 개별 삭제 버튼 동작 시 HTML 노드와 시트 동기화 처리 완벽 최적화
     function deleteProduct(id) {
         if (String(id).startsWith("temp_")) {
             alert("⚠️ 현재 상품이 시트에 안전하게 등록 처리 중입니다. 1~2초 후 다시 시도해 주세요.");
@@ -774,18 +799,16 @@
         if (confirm("이 상품을 화면과 구글 시트에서 정말 삭제하시겠습니까?")) {
             const row = document.querySelector(`tr[data-id="${id}"]`);
             if(row) {
-                row.style.opacity = "0.3"; // 처리 중 시각 피드백 제공
+                row.style.opacity = "0.3";
             }
             
-            // 로컬 데이터 선반영
             products = products.filter(p => String(p.id) !== String(id));
             localStorage.setItem('md_cached_products', JSON.stringify(products));
 
-            // 구글 시트에 즉시 동기화 요청 전송 후 콜백으로 HTML 노드 영구 삭제
             sendDataToSheets({ action: "delete", id: id }, (res) => {
                 if(row) row.remove();
                 setStatus('sync', "✅ 구글 스프레드시트 삭제 완료");
-                renderTable(); // No. 넘버링 정렬을 위한 리렌더링
+                renderTable(); 
             });
         }
     }
@@ -793,6 +816,8 @@
     function renameCompanyPrompt(oldName) {
         const newName = prompt(`[${oldName}]의 새로운 업체명을 입력하세요:`, oldName);
         if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+        
+        // 💡 [버그 교정]: 백엔드(코드.gs) 스크립트와 액션명 매핑 정상화
         sendDataToSheets({ action: "renameBrand", oldName: oldName, newName: newName.trim() }, () => fetchDataFromSheets(false));
     }
 
@@ -1056,7 +1081,10 @@
         textSpan.innerText = cleanTxt;
 
         const index = products.findIndex(p => String(p.id) === String(id));
-        if(index !== -1) products[index].note = cleanTxt;
+        if(index !== -1) {
+            products[index].note = cleanTxt;
+            localStorage.setItem('md_cached_products', JSON.stringify(products));
+        }
 
         sendDataToSheets({ action: "update", id: id, field: "note", value: cleanTxt });
     }
@@ -1067,6 +1095,7 @@
         const index = products.findIndex(p => String(p.id) === String(id));
         if(index !== -1) {
             products.splice(index, 1);
+            localStorage.setItem('md_cached_products', JSON.stringify(products));
             sendDataToSheets({ action: "delete", id: id }, () => { refreshNoteList(); });
         }
     }
