@@ -398,7 +398,7 @@
             .then(data => {
                 // 시트 내부의 특정 행 데이터를 이용하여 암호 수집 매칭
                 const passProd = data.products ? data.products.find(p => p[4] === "공통" && p[5] === "비밀번호설정") : null;
-                const sheetPassword = passProd ? String(passProd[10]).trim() : "1234"; // 시트 K열 데이터 기반 디폴트값
+                const sheetPassword = passProd ? String(passProd[10]).trim() : "2369"; // 시트 K열 데이터 기반 디폴트값
 
                 cachedServerPassword = sheetPassword;
 
