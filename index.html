@@ -6,7 +6,6 @@
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* 암호 인증 전 화면 감추기용 레이어 스타일 */
         #authOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #2f3542; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: 'Malgun Gothic', sans-serif; }
         .auth-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; color: #333; width: 360px; }
         .auth-box h3 { margin-top: 0; color: #2f3542; font-size: 18px; margin-bottom: 15px; }
@@ -15,47 +14,32 @@
         .auth-btn { width: 100%; padding: 10px; background-color: #2196F3; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         .auth-btn:hover { background-color: #1e88e5; }
         .auth-msg { font-size: 12px; color: #e74c3c; margin-top: 8px; min-height: 18px; }
-
         body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; color: #333; background-color: #f5f6f8; overflow-x: hidden; }
-        
-        /* 🏢 사이드바 기본 스타일 */
         .sidebar { width: 230px; background-color: #2f3542; color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.3s ease; z-index: 100; }
         .sidebar-top { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
         .sidebar h3 { margin-top: 0; padding-bottom: 8px; border-bottom: 1px solid #57606f; font-size: 14px; }
         .company-list { list-style: none; padding: 0; margin: 10px 0; }
-        
         .company-item { padding: 6px 8px; margin-bottom: 4px; background-color: #3f4656; border-radius: 3px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .company-item:hover { background-color: #4b556a; }
         .company-item.active { background-color: #2196F3; font-weight: bold; }
         .btn-company-note { background: #57606f; color: white; border: none; border-radius: 3px; padding: 2px 5px; font-size: 11px; cursor: pointer; margin-left: 5px; transition: all 0.2s; }
         .btn-company-note:hover { background: #f1c40f; color: #333; }
-        
         .sidebar-footer { border-top: 1px solid #57606f; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
         .sidebar-footer .btn { width: 100%; text-align: center; box-sizing: border-box; }
         .btn-clear-mini { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
-        
-        /* 🔘 사이드바 접기/펴기 토글 버튼 */
         .sidebar-toggle-btn { position: fixed; top: 15px; left: 242px; width: 28px; height: 28px; background-color: #2f3542; color: white; border: 1px solid #57606f; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: left 0.3s ease, background-color 0.2s; z-index: 101; outline: none; }
         .sidebar-toggle-btn:hover { background-color: #57606f; }
-
-        /* 💻 메인 콘텐츠 영역 */
         .main-content { margin-left: 230px; padding: 15px 20px; flex-grow: 1; box-sizing: border-box; transition: margin-left 0.3s ease, margin-right 0.3s ease; }
-        
         body.sidebar-collapsed .sidebar { transform: translateX(-230px); }
         body.sidebar-collapsed .sidebar-toggle-btn { left: 12px; background-color: #2196F3; border-color: #2196F3; }
         body.sidebar-collapsed .main-content { margin-left: 0; }
-
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 12px 16px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .header-left { display: flex; align-items: center; padding-left: 35px; }
         h2 { margin: 0; font-size: 18px; white-space: nowrap; }
-        
         .status-badge { font-size: 11px; padding: 5px 10px; border-radius: 4px; font-weight: bold; transition: all 0.3s; white-space: nowrap; }
         .status-sync { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
         .status-saving { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffcc80; animation: blink 1s infinite; }
-        
         @keyframes blink { 50% { opacity: 0.5; } }
-
-        /* 📍 상태 필터 탭 스타일 */
         .filter-tab-container { display: inline-flex; background: #e9ecef; padding: 2px; border-radius: 4px; gap: 2px; margin-bottom: 5px; }
         .filter-tab { border: none; background: transparent; padding: 4px 10px; font-size: 11px; font-weight: bold; color: #57606f; border-radius: 3px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
         .filter-tab:hover { background: rgba(0,0,0,0.05); color: #2f3542; }
@@ -63,70 +47,53 @@
         .filter-tab.active[data-status="공급중"] { background: #2e7d32; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .filter-tab.active[data-status="품절"] { background: #ef6c00; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .filter-tab.active[data-status="단종"] { background: #c62828; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-
         .header-right { display: flex; align-items: center; gap: 10px; }
         .search-box-container { display: flex; align-items: center; background-color: white; padding: 5px 10px; border-radius: 4px; border: 1px solid #ced4da; }
         .search-input { border: none; outline: none; font-size: 12px; width: 200px; }
-        
         .btn { color: white; padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-add-product { background-color: #4CAF50; }
         .btn-add-company { background-color: #2196F3; padding: 6px 10px; font-size: 11px; width: 100%; margin-top: 5px;}
         .btn-excel-dn { background-color: #f1c40f; color: #333; }
         .btn-excel-up { background-color: #9b59b6; }
-        
-        /* 🚨 상단 제어 버튼 스타일 */
         .action-btn-group { display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end; white-space: nowrap; }
         .btn-select-delete { background-color: #e74c3c; color: white; font-weight: bold; padding: 4px 12px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; transition: background 0.2s; }
         .btn-select-delete:hover { background-color: #c0392b; }
-
         .btn-delete { background-color: #f44336; padding: 2px 6px; font-size: 11px; border-radius: 2px; border:none; color:white; cursor:pointer; opacity: 0; transition: opacity 0.15s ease; }
         .btn-link-go { background-color: #00bcd4; color: white; border: none; padding: 3px 6px; font-size: 11px; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; font-weight: bold; }
         .btn-link-go:hover { background-color: #0097a7; }
-        
         tr { transition: opacity 0.2s ease, background-color 0.2s ease; }
         tr:hover .btn-delete { opacity: 1; }
-        
         tr.selected-row { background-color: #e8f4fd !important; }
         tr.selected-row td { border-color: #b3d7ff; }
         tr.selected-row .brand-cell { background-color: #d0e6ff; }
         tr.selected-row .company-cell { background-color: #dae8f5; }
         tr.selected-row .sabang-cell { background-color: #f7edd3; }
         tr.selected-row .margin-cell { background-color: #e0efff; }
-
         .btn-calc-trigger { background-color: #4b6584; color: white; font-weight: bold; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap; }
         .btn-calc-trigger:hover { background-color: #3b4f66; }
-
         .table-container { background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        
         th, td { border: 1px solid #ddd; padding: 5px 4px; text-align: center; font-size: 11px; white-space: nowrap; cursor: pointer; }
         th { background-color: #f8f9fa; font-weight: bold; cursor: default; }
         .num-cell { background-color: #f1f2f6; color: #57606f; font-weight: bold; cursor: default; }
         .sabang-cell { background-color: #fcf8e3; font-weight: bold; }
         .brand-cell { background-color: #e8f0fe; color: #1a73e8; font-weight: bold; }
         .company-cell { background-color: #f0f4f8; color: #2c3e50; font-weight: bold; }
-        
         .model-cell { max-width: 120px; font-size: 11px; white-space: normal !important; word-break: break-all; line-height: 1.3; }
         .name-cell { max-width: 315px; font-size: 11px; white-space: normal !important; word-break: break-all; line-height: 1.3; }
-        
         .status-select { font-size: 11px; padding: 2px 4px; border-radius: 3px; border: 1px solid #ccc; font-weight: bold; outline: none; cursor: pointer; }
         .status-active { color: #2e7d32; border-color: #a5d6a7; background-color: #e8f5e9; }
         .status-soldout { color: #ef6c00; border-color: #ffcc80; background-color: #fff3e0; }
         .status-discontinued { color: #c62828; border-color: #ef9a9a; background-color: #ffebee; }
-
         .margin-cell { font-weight: bold; color: #0066cc; background-color: #f4f9ff; text-align: right; }
         .margin-closed-cell { font-weight: bold; color: #e67e22; background-color: #fff9f2; text-align: right; }
-        
         .price { text-align: right; }
         #excelInput { display: none; }
-
-        /* 모달 스타일 */
         .calc-modal { display: none; position: fixed; z-index: 1000; right: 0; top: 0; width: 520px; height: 100vh; background-color: white; box-shadow: -5px 0 25px rgba(0,0,0,0.15); border-left: 1px solid #dcdde1; }
         .calc-modal-content { height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; position: relative; color: #222; background-color: #f8f9fa; }
         .calc-modal-content h2 { text-align: center; color: #222; margin-top: 10px; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #4b6584; padding-bottom: 10px; }
         .calc-close { color: #888; position: absolute; left: 15px; top: 15px; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10; }
         .calc-close:hover { color: #333; }
-        
         .calc-input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: white; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .calc-input-row { display: flex; gap: 8px; }
         .calc-input-group { flex: 1; }
@@ -135,43 +102,35 @@
         .calc-input-group input:focus { border-color: #4b6584; outline: none; }
         .btn-calc-run { width: 100%; padding: 10px; background: #4b6584; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; }
         .btn-calc-run:hover { background: #3b4f66; }
-        
         .calc-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; background: white; }
         .calc-table th, .calc-table td { padding: 6px 8px; border: 1px solid #ddd; box-sizing: border-box; cursor: default; }
         .calc-table th { background-color: #e9ecef; color: #333; font-weight: bold; text-align: center; }
         .calc-table tr:hover { background-color: #f1f3f5; }
-        
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .minus { color: #0056b3 !important; }
         .plus { color: #d9534f !important; }
-        
         .info-summary { margin-bottom: 10px; font-size: 11px; color: #555; background: #e8f4fd; padding: 10px; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border: 1px solid #bbeeff; }
         .info-summary span b { color: #2196F3; }
         .info-summary span.full-width { grid-column: span 2; border-top: 1px dashed #bbeeff; padding-top: 4px; margin-top: 2px; }
-
         .note-modal { display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
         .note-modal-content { background-color: white; margin: 12% auto; padding: 20px; border-radius: 8px; width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; }
         .note-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
         .note-modal-header h3 { margin: 0; font-size: 15px; color: #2c3e50; }
         .note-close { font-size: 20px; font-weight: bold; cursor: pointer; color: #aaa; }
         .note-close:hover { color: #333; }
-        
         .note-list-box { max-height: 280px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e9ecef; }
         .note-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 5px; border-bottom: 1px dashed #dee2e6; font-size: 12px; gap: 10px; }
         .note-item:last-child { border-bottom: none; }
         .note-text-area { flex-grow: 1; line-height: 1.5; color: #333; word-break: break-all; }
         .note-action-btns { display: flex; gap: 3px; shrink: 0; }
-        
         .btn-note-edit { background-color: #3498db; color: white; border: none; padding: 2px 6px; font-size: 11px; border-radius: 2px; cursor: pointer; }
         .btn-note-del { background-color: #e74c3c; color: white; border: none; padding: 2px 6px; font-size: 11px; border-radius: 2px; cursor: pointer; }
-        
         .note-insert-form { display: flex; gap: 6px; border-top: 1px solid #ddd; padding-top: 12px; }
         .note-input { flex-grow: 1; padding: 6px 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
         .btn-note-add { background-color: #2ecc71; color: white; border: none; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; }
         .note-empty { text-align: center; font-size: 12px; color: #999; padding: 30px 0; }
-        
         .top-action-wrapper { text-align: right; vertical-align: bottom; }
     </style>
 </head>
@@ -180,7 +139,7 @@
 <div id="authOverlay">
     <div class="auth-box">
         <h3>🔒 시스템 인증보안</h3>
-        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">허가된 담당자만 진입할 수 있습니다.<br>비밀번호를 입력하세요.</p>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">허가된 MD 담당자만 진입할 수 있습니다.<br>비밀번호를 입력하세요.</p>
         <input type="password" id="sysPasswordInput" class="auth-input" placeholder="접속 패스워드 입력" onkeyup="checkAuthEnter(event)">
         <button class="auth-btn" onclick="verifySystemPassword()">인증 및 시스템 접속</button>
         <div id="authErrorMsg" class="auth-msg"></div>
@@ -199,7 +158,6 @@
         </ul>
         <button class="btn btn-add-company" onclick="addCompanyPrompt()">+ 신규 업체 등록</button>
     </div>
-    
     <div class="sidebar-footer">
         <button class="btn btn-add-product" onclick="addNewProductRow()">+ 개별 상품 추가</button>
         <button class="btn btn-excel-dn" onclick="downloadTemplateXLSX()">📥 엑셀 양식 다운로드</button>
@@ -212,15 +170,10 @@
 
 <div class="main-content" id="mainContent">
     <div class="header-container">
-        <div class="header-left">
-            <h2 id="currentViewTitle">통합 상품 가격 리스트</h2>
-        </div>
-
+        <div class="header-left"><h2 id="currentViewTitle">통합 상품 가격 리스트</h2></div>
         <div class="header-right">
             <span id="syncStatus" class="status-badge status-sync">✅ 로컬 데이터 로드 완료</span>
-            <div class="search-box-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()">
-            </div>
+            <div class="search-box-container"><input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()"></div>
             <button class="btn-calc-trigger" onclick="openCalcModal()">📊 마진 계산기</button>
         </div>
     </div>
@@ -228,23 +181,7 @@
     <div class="table-container">
         <table id="productTable">
             <colgroup>
-                <col style="width: 35px;"> 
-                <col style="width: 45px;"> 
-                <col style="width: 85px;">
-                <col style="width: 85px;">
-                <col style="width: 80px;">
-                <col style="width: 75px;">
-                <col style="width: 100px;">
-                <col style="width: 315px;"> 
-                <col style="width: 80px;">
-                <col style="width: 80px;">
-                <col style="width: 70px;">
-                <col style="width: 80px;">
-                <col style="width: 70px;">
-                <col style="width: 80px;">
-                <col style="width: 100px;">
-                <col style="width: 75px;">
-                <col style="width: 75px;">
+                <col style="width: 35px;"><col style="width: 45px;"><col style="width: 85px;"><col style="width: 85px;"><col style="width: 80px;"><col style="width: 75px;"><col style="width: 100px;"><col style="width: 315px;"><col style="width: 80px;"><col style="width: 80px;"><col style="width: 70px;"><col style="width: 80px;"><col style="width: 70px;"><col style="width: 80px;"><col style="width: 100px;"><col style="width: 75px;"><col style="width: 75px;">
             </colgroup>
             <thead>
                 <tr style="background-color: transparent;">
@@ -258,29 +195,11 @@
                     </th>
                     <th colspan="11" style="border: none; background: transparent;"></th>
                     <th colspan="4" style="border: none; background: transparent; padding: 0;" class="top-action-wrapper">
-                        <div class="action-btn-group">
-                            <button class="btn-select-delete" onclick="deleteSelectedProducts()">🗑️ 선택 삭제</button>
-                        </div>
+                        <div class="action-btn-group"><button class="btn-select-delete" onclick="deleteSelectedProducts()">🗑️ 선택 삭제</button></div>
                     </th>
                 </tr>
                 <tr>
-                    <th><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)"></th> 
-                    <th style="background-color: #f1f2f6;">No.</th>
-                    <th style="background-color: #d2e3fc;">브랜드명</th>
-                    <th style="background-color: #e8f0fe;">업체명</th>
-                    <th style="background-color: #fcf8e3;">사방넷코드</th>
-                    <th style="background-color: #f5f6f8;">상태</th>
-                    <th>모델명</th>
-                    <th>상품명</th>
-                    <th>공급가</th>
-                    <th>온라인판매가</th>
-                    <th style="background-color: #eafaf1;">온라인마진율</th>
-                    <th>폐쇄몰판매가</th>
-                    <th style="background-color: #fff4e6;">폐쇄몰마진율</th>
-                    <th>소비자가</th>
-                    <th>비고</th>
-                    <th>네이버쇼핑</th>
-                    <th>관리</th>
+                    <th><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)"></th><th style="background-color: #f1f2f6;">No.</th><th style="background-color: #d2e3fc;">브랜드명</th><th style="background-color: #e8f0fe;">업체명</th><th style="background-color: #fcf8e3;">사방넷코드</th><th style="background-color: #f5f6f8;">상태</th><th>모델명</th><th>상품명</th><th>공급가</th><th>온라인판매가</th><th style="background-color: #eafaf1;">온라인마진율</th><th>폐쇄몰판매가</th><th style="background-color: #fff4e6;">폐쇄몰마진율</th><th>소비자가</th><th>비고</th><th>네이버쇼핑</th><th>관리</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -295,40 +214,18 @@
             <h2>📊 MD 마진 분석기</h2>
             <div class="calc-input-box">
                 <div class="calc-input-row">
-                    <div class="calc-input-group">
-                        <label>공급가 (VAT 포함)</label>
-                        <input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)">
-                    </div>
-                    <div class="calc-input-group">
-                        <label>택배비</label>
-                        <input type="number" id="deliveryFee" placeholder="숫자입력" value="0" onkeyup="checkCalcEnter(event)">
-                    </div>
+                    <div class="calc-input-group"><label>공급가 (VAT 포함)</label><input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
+                    <div class="calc-input-group"><label>택배비</label><input type="number" id="deliveryFee" placeholder="숫자입력" value="0" onkeyup="checkCalcEnter(event)"></div>
                 </div>
-                <div class="calc-input-group">
-                    <label>예상 판매가 (VAT 포함)</label>
-                    <input type="number" id="sellingPrice" placeholder="숫자입력" onkeyup="checkCalcEnter(event)">
-                </div>
+                <div class="calc-input-group"><label>예상 판매가 (VAT 포함)</label><input type="number" id="sellingPrice" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
                 <button class="btn-calc-run" onclick="calcAllMargins()">분석하기</button>
             </div>
-
             <div id="calcResultSection" style="display:none;">
                 <div class="info-summary">
-                    <span>공급가: <b id="sumCost">0</b>원</span>
-                    <span>택배비: <b id="sumDelivery">0</b>원</span>
-                    <span>공급가액(원가): <b id="sumCostNet">0</b>원</span>
-                    <span>예상 판매가: <b id="sumSp">0</b>원</span>
-                    <span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
+                    <span>공급가: <b id="sumCost">0</b>원</span><span>택배비: <b id="sumDelivery">0</b>원</span><span>공급가액(원가): <b id="sumCostNet">0</b>원</span><span>예상 판매가: <b id="sumSp">0</b>원</span><span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
                 </div>
                 <table class="calc-table">
-                    <thead>
-                        <tr>
-                            <th width="12%">수수료</th>
-                            <th width="22%">정산예정금액</th>
-                            <th width="22%">공급가액(공제)</th>
-                            <th width="22%">최종 마진율</th>
-                            <th width="22%">최종 마진금액</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th width="12%">수수료</th><th width="22%">정산예정금액</th><th width="22%">공급가액(공제)</th><th width="22%">최종 마진율</th><th width="22%">최종 마진금액</th></tr></thead>
                     <tbody id="calcResultTableBody"></tbody>
                 </table>
             </div>
@@ -338,846 +235,250 @@
 
 <div id="noteModal" class="note-modal">
     <div class="note-modal-content">
-        <div class="note-modal-header">
-            <h3 id="noteModalTitle">업체 특이사항 목록</h3>
-            <span class="note-close" onclick="closeNoteModal()">&times;</span>
-        </div>
+        <div class="note-modal-header"><h3 id="noteModalTitle">업체 특이사항 목록</h3><span class="note-close" onclick="closeNoteModal()">&times;</span></div>
         <div class="note-list-box" id="noteListBox"></div>
-        <div class="note-insert-form">
-            <input type="text" id="newNoteInput" class="note-input" placeholder="새로운 거래처 특이사항 내용을 입력해 주세요...">
-            <button class="btn-note-add" id="btnSubmitNote">＋ 추가</button>
-        </div>
+        <div class="note-insert-form"><input type="text" id="newNoteInput" class="note-input" placeholder="새로운 거래처 특이사항 내용을 입력해 주세요..."><button class="btn-note-add" id="btnSubmitNote">＋ 추가</button></div>
     </div>
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz6ZDz3rf15-q9oAWzW6ZJSXhG3Smztt4NHsAqGeZlrWOZIXUI3BW1h-77o7S3j8PinwA/exec";
-
-    let companies = [];
-    let products = [];
-    let currentSelectedCompany = 'all';
-    let currentSelectedStatus = 'all'; 
-    let oldCompanyValue = '';
-    let oldSabangValue = ''; 
-    let ActiveNoteTargetCompany = ''; 
-    let searchTimeout = null;
-    let cachedServerPassword = ""; // 시트 백엔드에서 받아온 비밀번호 보관용 변수
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsxfe7Fd6wdfOEemKo3H_gOW0QSaoqwabewh4aol4fHLRooTUCy80qcp0pT_gjWrDLLw/exec";
+    let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', searchTimeout=null, cachedServerPassword="";
 
     window.onload = function() {
-        // 보안 세션 상태를 먼저 체크
-        if (sessionStorage.getItem("aion_authenticated") === "true") {
-            document.getElementById("authOverlay").style.display = "none";
-        }
-        loadCachedData();
-        fetchDataFromSheets(false);
+        if(sessionStorage.getItem("aion_authenticated")==="true") document.getElementById("authOverlay").style.display="none";
+        loadCachedData(); fetchDataFromSheets(false);
     };
-
-    /* 🔒 실시간 원격 비밀번호 보안 인증 함수 */
     function verifySystemPassword() {
-        const inputEl = document.getElementById("sysPasswordInput");
-        const msgEl = document.getElementById("authErrorMsg");
-        const inputVal = inputEl.value.trim();
-
-        if(!inputVal) {
-            msgEl.innerText = "비밀번호를 입력해 주세요.";
-            return;
-        }
-
-        msgEl.style.color = "#2196F3";
-        msgEl.innerText = "비밀번호 인증 확인 중...";
-
-        // 캐시된 암호가 있으면 1차 빠른 대조 수행
-        if(cachedServerPassword && inputVal === cachedServerPassword) {
-            proceedAccess();
-            return;
-        }
-
-        // 구글 시트에 "비밀번호 검증 요청"을 직접 전송 (암호 안전화)
-        fetch(GAS_WEB_APP_URL)
-            .then(res => res.json())
-            .then(data => {
-                // 시트 내부의 특정 행 데이터를 이용하여 암호 수집 매칭
-                const passProd = data.products ? data.products.find(p => p[4] === "공통" && p[5] === "비밀번호설정") : null;
-                const sheetPassword = passProd ? String(passProd[10]).trim() : "2369"; // 시트 K열 데이터 기반 디폴트값
-
-                cachedServerPassword = sheetPassword;
-
-                if (inputVal === sheetPassword) {
-                    proceedAccess();
-                } else {
-                    msgEl.style.color = "#e74c3c";
-                    msgEl.innerText = "❌ 비밀번호가 일치하지 않습니다.";
-                    inputEl.value = "";
-                    inputEl.focus();
-                }
-            })
-            .catch(err => {
-                msgEl.style.color = "#e74c3c";
-                msgEl.innerText = "네트워크 연결 실패 (오프라인 모드)";
-            });
+        const inputEl = document.getElementById("sysPasswordInput"), msgEl = document.getElementById("authErrorMsg"), inputVal = inputEl.value.trim();
+        if(!inputVal){ msgEl.innerText="비밀번호를 입력해 주세요."; return; }
+        msgEl.style.color="#2196F3"; msgEl.innerText="비밀번호 인증 확인 중...";
+        if(cachedServerPassword && inputVal===cachedServerPassword){ proceedAccess(); return; }
+        fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
+            const sheetPassword = data.serverPassword ? String(data.serverPassword).trim() : "1234";
+            cachedServerPassword = sheetPassword;
+            if(inputVal===sheetPassword){ proceedAccess(); }
+            else{ msgEl.style.color="#e74c3c"; msgEl.innerText="❌ 비밀번호가 일치하지 않습니다."; inputEl.value=""; inputEl.focus(); }
+        }).catch(err=>{ msgEl.style.color="#e74c3c"; msgEl.innerText="네트워크 연결 실패"; });
     }
-
-    function proceedAccess() {
-        sessionStorage.setItem("aion_authenticated", "true");
-        document.getElementById("authOverlay").style.fadeOut = "200ms";
-        setTimeout(() => {
-            document.getElementById("authOverlay").style.display = "none";
-        }, 200);
+    function proceedAccess(){ sessionStorage.setItem("aion_authenticated","true"); document.getElementById("authOverlay").style.display="none"; }
+    function checkAuthEnter(e){ if(e.key==="Enter") verifySystemPassword(); }
+    function toggleSidebar(){
+        const body=document.body, btn=document.getElementById('sidebarToggleBtn');
+        body.classList.toggle('sidebar-collapsed'); btn.innerText=body.classList.contains('sidebar-collapsed')?'▶':'◀';
     }
-
-    function checkAuthEnter(e) {
-        if(e.key === "Enter") verifySystemPassword();
+    function setStatus(type,msg){
+        const badge=document.getElementById('syncStatus'); badge.innerText=msg;
+        badge.className=type==='sync'?"status-badge status-sync":"status-badge status-saving";
     }
-
-    function toggleSidebar() {
-        const body = document.body;
-        const toggleBtn = document.getElementById('sidebarToggleBtn');
-        body.classList.toggle('sidebar-collapsed');
-        if (body.classList.contains('sidebar-collapsed')) {
-            toggleBtn.innerText = '▶';
-        } else {
-            toggleBtn.innerText = '◀';
-        }
+    function toggleSelectAll(master){
+        const checkboxes=document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(cb=>{ const tr=cb.closest('tr'); if(tr && tr.style.display!=='none') cb.checked=master.checked; });
     }
-
-    function setStatus(type, message) {
-        const badge = document.getElementById('syncStatus');
-        badge.innerText = message;
-        if (type === 'sync') badge.className = "status-badge status-sync";
-        else if (type === 'saving') badge.className = "status-badge status-saving";
-    }
-
-    function toggleSelectAll(masterCheckbox) {
-        const checkboxes = document.querySelectorAll('.row-checkbox');
-        checkboxes.forEach(cb => {
-            const tr = cb.closest('tr');
-            if (tr && tr.style.display !== 'none') {
-                cb.checked = masterCheckbox.checked;
+    async function deleteSelectedProducts(){
+        const checked=document.querySelectorAll('.row-checkbox:checked'); if(checked.length===0){ alert("선택된 상품이 없습니다."); return; }
+        if(confirm(`선택한 ${checked.length}개의 상품을 일괄 삭제하시겠습니까?`)){
+            setStatus('saving', `🗑️ 반영 중 (0 / ${checked.length})...`);
+            let deleted=0;
+            for(const cb of Array.from(checked)){
+                const tr=cb.closest('tr'); if(!tr) continue;
+                const id=tr.getAttribute('data-id');
+                if(String(id).startsWith("temp_")){ products=products.filter(p=>String(p.id)!==String(id)); tr.remove(); deleted++; continue; }
+                products=products.filter(p=>String(p.id)!==String(id)); tr.style.opacity="0.3";
+                try{ await fetch(GAS_WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"delete",id:id})}); tr.remove(); deleted++; setStatus('saving',`🗑️ 반영 중 (${deleted}/${checked.length})...`); }catch(e){console.error(e);}
             }
-        });
-    }
-
-    async function deleteSelectedProducts() {
-        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
-        if (checkedBoxes.length === 0) {
-            alert("선택된 상품이 없습니다. 삭제할 상품의 체크박스를 선택해 주세요.");
-            return;
-        }
-
-        if (confirm(`선택한 ${checkedBoxes.length}개의 상품을 화면과 구글 시트에서 일괄 삭제하시겠습니까?`)) {
-            setStatus('saving', `🗑️ 구글 시트 반영 중 (0 / ${checkedBoxes.length})...`);
-            
-            const checkedArray = Array.from(checkedBoxes);
-            let deletedCount = 0;
-
-            for (const cb of checkedArray) {
-                const tr = cb.closest('tr');
-                if (!tr) continue;
-                
-                const id = tr.getAttribute('data-id');
-                if (String(id).startsWith("temp_")) {
-                    products = products.filter(p => String(p.id) !== String(id));
-                    tr.remove();
-                    deletedCount++;
-                    continue;
-                }
-
-                products = products.filter(p => String(p.id) !== String(id));
-                tr.style.opacity = "0.3";
-
-                try {
-                    await fetch(GAS_WEB_APP_URL, {
-                        method: "POST",
-                        body: JSON.stringify({ action: "delete", id: id })
-                    });
-                    
-                    tr.remove();
-                    deletedCount++;
-                    setStatus('saving', `🗑️ 구글 시트 반영 중 (${deletedCount} / ${checkedArray.length})...`);
-                } catch (err) {
-                    console.error("삭제 중 오류 발생:", err);
-                }
-            }
-
-            setStatus('sync', "✅ 선택 항목 일괄 삭제 완료");
-            document.getElementById('selectAllCheckbox').checked = false;
-            localStorage.setItem('md_cached_products', JSON.stringify(products));
-            renderTable();
+            setStatus('sync',"✅ 선택 항목 삭제 완료"); document.getElementById('selectAllCheckbox').checked=false;
+            localStorage.setItem('md_cached_products',JSON.stringify(products)); renderTable();
         }
     }
-
-    function loadCachedData() {
-        const cachedCompanies = localStorage.getItem('md_cached_companies');
-        const cachedProducts = localStorage.getItem('md_cached_products');
-        if (cachedCompanies && cachedProducts) {
-            companies = JSON.parse(cachedCompanies);
-            products = JSON.parse(cachedProducts);
-            renderSidebar();
-            renderTable();
-        }
+    function loadCachedData(){
+        const cc=localStorage.getItem('md_cached_companies'), cp=localStorage.getItem('md_cached_products');
+        if(cc && cp){ companies=JSON.parse(cc); products=JSON.parse(cp); renderSidebar(); renderTable(); }
     }
-
-    function fetchDataFromSheets(isManual = false, callback = null) {
-        if(isManual) setStatus('saving', "🔄 최신 데이터 동기화 중...");
-        
-        fetch(GAS_WEB_APP_URL)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("시트 에러 발생: " + data.error);
-                } else {
-                    const rawProducts = data.products || [];
-                    
-                    products = rawProducts.map((row, index) => {
-                        row = row || [];
-                        return {
-                            id: row.id || (index + 2), 
-                            brand: row.brand || row[0] || "",
-                            company: row.company || row[1] || "",
-                            sabangCode: row.sabangCode || row[2] || "",
-                            status: row.status || row[3] || "공급중",
-                            modelName: row.modelName || row[4] || "",   
-                            productName: row.productName || row[5] || "", 
-                            costPrice: Number(row.costPrice !== undefined ? row.costPrice : (row[6] || 0)),
-                            sellPrice: Number(row.sellPrice !== undefined ? row.sellPrice : (row[7] || 0)),
-                            closedPrice: Number(row.closedPrice !== undefined ? row.closedPrice : (row[8] || 0)),
-                            consumerPrice: Number(row.consumerPrice !== undefined ? row.consumerPrice : (row[9] || 0)),
-                            note: row.note || row[10] || "",
-                            productLink: row.productLink || row[11] || ""
-                        };
-                    });
-
-                    const passProd = rawProducts.find(p => p[4] === "공통" && p[5] === "비밀번호설정");
-                    if(passProd) cachedServerPassword = String(passProd[10]).trim();
-
-                    const uniqueCompanies = [...new Set(products.map(p => p.company ? String(p.company).trim() : "").filter(c => c && c !== "-" && c !== ""))];
-                    companies = uniqueCompanies.sort();
-                    
-                    localStorage.setItem('md_cached_companies', JSON.stringify(companies));
-                    localStorage.setItem('md_cached_products', JSON.stringify(products));
-                    
-                    renderSidebar();
-                    renderTable();
-                    setStatus('sync', "🟢 실시간 동기화 완료");
-                    
-                    if (callback) callback();
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                setStatus('sync', "⚠️ 오프라인 모드 (연결 확인 필요)");
-            });
-    }
-
-    function sendDataToSheets(payload, callback) {
-        setStatus('saving', "☁️ 변경사항 실시간 저장 중...");
-        
-        fetch(GAS_WEB_APP_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(callback) callback(data);
-            else setStatus('sync', "✅ 모든 변경사항 저장됨");
-        })
-        .catch(err => {
-            setStatus('sync', "❌ 저장 실패");
-        });
-    }
-
-    function addNewProductRow() {
-        let targetCompany = currentSelectedCompany === 'all' ? (companies[0] || "기본업체") : currentSelectedCompany;
-        let targetBrand = "-";
-
-        if (currentSelectedCompany !== 'all') {
-            const matchedProduct = products.find(p => p.company === currentSelectedCompany && p.brand && p.brand !== "-");
-            if (matchedProduct) targetBrand = matchedProduct.brand;
-        }
-
-        const tempSabang = "SB-" + Date.now().toString().slice(-6);
-        const tempId = "temp_" + Date.now();
-        const newProd = { 
-            id: tempId, brand: targetBrand, company: targetCompany, sabangCode: tempSabang, status: "공급중", 
-            modelName: "-", productName: "신규 상품 (저장 중...)", costPrice: 0, sellPrice: 0, closedPrice: 0, consumerPrice: 0, note: "-", productLink: "-" 
-        };
-        
-        products.unshift(newProd); 
-        renderTable();             
-
-        sendDataToSheets({ action: "add", product: newProd }, (result) => {
-            if (result && result.id) {
-                const index = products.findIndex(p => String(p.id) === String(tempId));
-                if (index !== -1) {
-                    products[index].id = result.id;
-                    if(products[index].productName === "신규 상품 (저장 중...)") {
-                        products[index].productName = "신규 상품";
-                    }
-                }
-                
-                const tempRow = document.querySelector(`tr[data-id="${tempId}"]`);
-                if(tempRow) {
-                    tempRow.setAttribute("data-id", result.id);
-                    const delBtn = tempRow.querySelector('.btn-delete');
-                    if(delBtn) delBtn.setAttribute("onclick", `deleteProduct('${result.id}')`);
-                    const nameCell = tempRow.querySelector('.name-cell');
-                    if(nameCell && nameCell.innerText === "신규 상품 (저장 중...)") nameCell.innerText = "신규 상품";
-                }
-                localStorage.setItem('md_cached_products', JSON.stringify(products));
-            }
-        });
-    }
-
-    function renderSidebar() {
-        const listContainer = document.getElementById("companyList");
-        listContainer.innerHTML = `<li class="company-item ${currentSelectedCompany === 'all' ? 'active' : ''}" onclick="selectCompany('all', this)"><span style="flex-grow:1; text-align:left;">전체 업체 보기</span></li>`;
-        
-        companies.forEach(comp => {
-            if(!comp || comp === "-") return;
-            const li = document.createElement('li');
-            li.className = `company-item ${currentSelectedCompany === comp ? 'active' : ''}`;
-            li.onclick = function(e) { 
-                if(e.target.closest('.btn-company-note')) return; 
-                selectCompany(comp, this); 
-            };
-            li.ondblclick = function() { renameCompanyPrompt(comp); };
-            li.innerHTML = `
-                <span style="flex-grow:1; text-align:left;">🏭 ${comp}</span>
-                <button class="btn-company-note" title="특이사항 모아보기" onclick="openNoteModal('${comp}')">📝</button>
-            `;
-            listContainer.appendChild(li);
-        });
-    }
-
-    function handlePreventEnter(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.target.blur();
-        }
-    }
-
-    function selectStatusFilter(status) {
-        currentSelectedStatus = status;
-        const tabs = document.querySelectorAll('.filter-tab');
-        tabs.forEach(tab => {
-            if(tab.getAttribute('data-status') === status) tab.classList.add('active');
-            else tab.classList.remove('active');
-        });
-        document.getElementById('selectAllCheckbox').checked = false; 
-        renderTable();
-    }
-
-    function renderTable() {
-        const tbody = document.getElementById("productTable").getElementsByTagName('tbody')[0];
-        tbody.innerHTML = "";
-        const fragment = document.createDocumentFragment();
-        let visibleIndex = 1; 
-
-        products.forEach(prod => {
-            if (prod.productName === "거래처 메모 기록용" || prod.modelName === "공통") return;
-            
-            if (currentSelectedCompany !== 'all' && String(prod.company).trim() !== String(currentSelectedCompany).trim()) return;
-            if (currentSelectedStatus !== 'all' && prod.status !== currentSelectedStatus) return;
-
-            const row = document.createElement('tr');
-            row.setAttribute("data-id", prod.id);
-
-            row.onclick = function(e) {
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.isContentEditable) return;
-                const activeRows = tbody.getElementsByTagName('tr');
-                for(let r of activeRows) { r.classList.remove('selected-row'); }
-                row.classList.add('selected-row');
-            };
-
-            const cCheck = row.insertCell(0);
-            cCheck.innerHTML = `<input type="checkbox" class="row-checkbox">`;
-
-            const cNum = row.insertCell(1); cNum.className = "num-cell"; cNum.innerText = visibleIndex++;
-            
-            const cBrand = row.insertCell(2); cBrand.className = "brand-cell"; cBrand.contentEditable = "true"; cBrand.innerText = prod.brand || "-";
-            cBrand.onkeydown = handlePreventEnter;
-            cBrand.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "brand", value: this.innerText.trim() }); };
-
-            const cComp = row.insertCell(3); cComp.className = "company-cell"; cComp.contentEditable = "true"; cComp.innerText = prod.company || "-";
-            cComp.onkeydown = handlePreventEnter;
-            cComp.onfocus = function() { oldCompanyValue = this.innerText.trim(); };
-            cComp.onblur = function() { 
-                const newVal = this.innerText.trim();
-                if(oldCompanyValue !== newVal) {
-                    sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "company", value: newVal }, () => fetchDataFromSheets(false));
-                }
-            };
-
-            const cSabang = row.insertCell(4); cSabang.className = "sabang-cell"; cSabang.contentEditable = "true"; cSabang.innerText = prod.sabangCode || "-";
-            cSabang.onkeydown = handlePreventEnter;
-            cSabang.onfocus = function() { oldSabangValue = this.innerText.trim(); };
-            cSabang.onblur = function() { 
-                const newVal = this.innerText.trim();
-                const currentId = row.getAttribute("data-id");
-                if (newVal === oldSabangValue) return;
-
-                if (newVal !== "" && newVal !== "-") {
-                    const isDuplicate = products.some(p => String(p.id) !== String(currentId) && p.sabangCode === newVal && p.productName !== "거래처 메모 기록용");
-                    if (isDuplicate) {
-                        alert(`⚠️ [중복 오류] 사방넷코드 '${newVal}'은 이미 사용 중입니다.`);
-                        this.innerText = oldSabangValue; 
-                        return;
-                    }
-                }
-                const idx = products.findIndex(p => String(p.id) === String(currentId));
-                if(idx !== -1) products[idx].sabangCode = newVal;
-                sendDataToSheets({ action: "update", id: currentId, field: "sabangCode", value: newVal }); 
-            };
-
-            const cStatus = row.insertCell(5);
-            const statusVal = prod.status || "공급중";
-            let selectClass = "status-active";
-            if(statusVal === "품절") selectClass = "status-soldout";
-            else if(statusVal === "단종") selectClass = "status-discontinued";
-            
-            cStatus.innerHTML = `
-                <select class="status-select ${selectClass}" onchange="changeProductStatus('${prod.id}', this)">
-                    <option value="공급중" ${statusVal === "공급중" ? "selected" : ""}>공급중</option>
-                    <option value="품절" ${statusVal === "품절" ? "selected" : ""}>품절</option>
-                    <option value="단종" ${statusVal === "단종" ? "selected" : ""}>단종</option>
-                </select>
-            `;
-
-            const cModel = row.insertCell(6); cModel.className = "model-cell"; cModel.contentEditable = "true"; cModel.innerText = prod.modelName || "-";
-            cModel.title = prod.modelName || "-";
-            cModel.onkeydown = handlePreventEnter;
-            cModel.onblur = function() { 
-                const val = this.innerText.trim();
-                this.title = val;
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "modelName", value: val }); 
-            };
-
-            const cName = row.insertCell(7); cName.className = "name-cell"; cName.style.textAlign = "left"; cName.contentEditable = "true"; cName.innerText = prod.productName || "-";
-            cName.title = prod.productName || "-";
-            cName.onkeydown = handlePreventEnter;
-            cName.onblur = function() { 
-                const val = this.innerText.trim();
-                this.title = val;
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "productName", value: val }); 
-            };
-
-            const cCost = row.insertCell(8); cCost.className = "price"; cCost.contentEditable = "true"; cCost.innerText = (prod.costPrice || 0).toLocaleString() + '원';
-            cCost.onkeydown = handlePreventEnter;
-            cCost.oninput = function() { recalculateRowMargins(row); }; 
-            cCost.onblur = function() { 
-                const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "costPrice", value: val });
-                this.innerText = val.toLocaleString() + '원';
-            };
-
-            const cSell = row.insertCell(9); cSell.className = "price"; cSell.contentEditable = "true"; cSell.innerText = (prod.sellPrice || 0).toLocaleString() + '원';
-            cSell.onkeydown = handlePreventEnter;
-            cSell.oninput = function() { recalculateRowMargins(row); };
-            cSell.onblur = function() { 
-                const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "sellPrice", value: val });
-                this.innerText = val.toLocaleString() + '원';
-            };
-
-            const cOnlineMargin = row.insertCell(10); cOnlineMargin.className = "margin-cell";
-            const onlineMargin = prod.sellPrice > 0 ? ((prod.sellPrice - prod.costPrice) / prod.sellPrice * 100) : 0;
-            cOnlineMargin.innerText = onlineMargin.toFixed(1) + '%';
-
-            const cClosed = row.insertCell(11); cClosed.className = "price"; cClosed.contentEditable = "true"; cClosed.innerText = (prod.closedPrice || 0).toLocaleString() + '원';
-            cClosed.onkeydown = handlePreventEnter;
-            cClosed.oninput = function() { recalculateRowMargins(row); };
-            cClosed.onblur = function() {
-                const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "closedPrice", value: val });
-                this.innerText = val.toLocaleString() + '원';
-            };
-
-            const cClosedMargin = row.insertCell(12); cClosedMargin.className = "margin-closed-cell";
-            const closedMargin = prod.closedPrice > 0 ? ((prod.closedPrice - prod.costPrice) / prod.closedPrice * 100) : 0;
-            cClosedMargin.innerText = closedMargin.toFixed(1) + '%';
-
-            const cCons = row.insertCell(13); cCons.className = "price"; cCons.contentEditable = "true"; cCons.innerText = (prod.consumerPrice || 0).toLocaleString() + '원';
-            cCons.onkeydown = handlePreventEnter;
-            cCons.onblur = function() { 
-                const val = parseNumber(this.innerText);
-                sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "consumerPrice", value: val });
-                this.innerText = val.toLocaleString() + '원';
-            };
-
-            const cNote = row.insertCell(14); cNote.contentEditable = "true"; cNote.style.textAlign = "left"; cNote.innerText = prod.note || "-";
-            cNote.onkeydown = handlePreventEnter;
-            cNote.onblur = function() { sendDataToSheets({ action: "update", id: row.getAttribute("data-id"), field: "note", value: this.innerText.trim() }); };
-
-            const cLink = row.insertCell(15);
-            const searchStr = prod.productName !== undefined && prod.productName !== null ? String(prod.productName).trim() : "";
-            cLink.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query=' + encodeURIComponent('${searchStr.replace(/'/g, "\\'")}'), '_blank')">🔍 검색</button>`;
-
-            const cDel = row.insertCell(16);
-            cDel.innerHTML = `<button class="btn-delete" onclick="deleteProduct('${prod.id}')">삭제</button>`;
-
-            fragment.appendChild(row);
-        });
-
-        tbody.appendChild(fragment);
-        searchFilterTable(); 
-    }
-
-    function changeProductStatus(id, selectEl) {
-        const newVal = selectEl.value;
-        selectEl.classList.remove('status-active', 'status-soldout', 'status-discontinued');
-        
-        if (newVal === "공급중") selectEl.classList.add('status-active');
-        else if (newVal === "품절") selectEl.classList.add('status-soldout');
-        else if (newVal === "단종") selectEl.classList.add('status-discontinued');
-
-        const index = products.findIndex(p => String(p.id) === String(id));
-        if(index !== -1) products[index].status = newVal;
-
-        sendDataToSheets({ action: "update", id: id, field: "status", value: newVal }, () => {
-            if(currentSelectedStatus !== 'all') renderTable();
-        });
-    }
-
-    function selectCompany(companyName, element) {
-        currentSelectedCompany = companyName;
-        document.getElementById('currentViewTitle').innerText = companyName === 'all' ? "통합 상품 가격 리스트" : `[${companyName}] 공급업체 상품 표`;
-        document.getElementById('selectAllCheckbox').checked = false; 
-        renderSidebar();
-        renderTable(); 
-    }
-
-    function deleteProduct(id) {
-        if (String(id).startsWith("temp_")) {
-            alert("⚠️ 현재 상품이 시트에 안전하게 등록 처리 중입니다. 1~2초 후 다시 시도해 주세요.");
-            return;
-        }
-
-        if (confirm("이 상품을 화면과 구글 시트에서 정말 삭제하시겠습니까?")) {
-            const row = document.querySelector(`tr[data-id="${id}"]`);
-            if(row) row.style.opacity = "0.3";
-            
-            products = products.filter(p => String(p.id) !== String(id));
-            localStorage.setItem('md_cached_products', JSON.stringify(products));
-
-            sendDataToSheets({ action: "delete", id: id }, (res) => {
-                if(row) row.remove();
-                setStatus('sync', "✅ 구글 스프레드시트 삭제 완료");
-                renderTable();
-            });
-        }
-    }
-
-    function renameCompanyPrompt(oldName) {
-        const newName = prompt(`[${oldName}]의 새로운 업체명을 입력하세요:`, oldName);
-        if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
-        sendDataToSheets({ action: "renameBrand", oldName: oldName, newName: newName.trim() }, () => fetchDataFromSheets(false));
-    }
-
-    function addCompanyPrompt() {
-        const name = prompt("추가할 새로운 업체명을 입력하세요:");
-        if (!name || name.trim() === "") return;
-        const cleanName = name.trim();
-        
-        if (!companies.includes(cleanName)) {
-            companies.push(cleanName);
-            companies.sort();
-            
-            const dummyId = "temp_comp_" + Date.now();
-            const dummyItem = {
-                id: dummyId, brand: "-", company: cleanName, sabangCode: "-", status: "공급중",
-                modelName: "공통", productName: "거래처 메모 기록용", costPrice: 0, sellPrice: 0,
-                closedPrice: 0, consumerPrice: 0, note: "신규 등록 업체", productLink: "-"
-            };
-            products.unshift(dummyItem);
-            
-            localStorage.setItem('md_cached_companies', JSON.stringify(companies));
-            localStorage.setItem('md_cached_products', JSON.stringify(products));
-            
-            renderSidebar();
-            selectCompany(cleanName, null);
-            
-            sendDataToSheets({ action: "add", product: dummyItem }, () => {
-                fetchDataFromSheets(false);
-            });
-        } else {
-            selectCompany(cleanName, null);
-        }
-    }
-
-    function clearAllData() {
-        if (confirm("⚠️ 정말로 모든 데이터를 일괄 삭제하시겠습니까?")) {
-            sendDataToSheets({ action: "clear" }, () => {
-                localStorage.removeItem('md_cached_companies');
-                localStorage.removeItem('md_cached_products');
-                fetchDataFromSheets(false);
-            });
-        }
-    }
-
-    function recalculateRowMargins(row) {
-        const cost = parseNumber(row.cells[8].innerText); 
-        const onlineSell = parseNumber(row.cells[9].innerText); 
-        const closedSell = parseNumber(row.cells[11].innerText); 
-
-        row.cells[10].innerText = onlineSell > 0 ? (((onlineSell - cost) / onlineSell) * 100).toFixed(1) + '%' : '0.0%';
-        row.cells[12].innerText = closedSell > 0 ? (((closedSell - cost) / closedSell) * 100).toFixed(1) + '%' : '0.0%';
-    }
-
-    function parseNumber(text) { return text ? parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0 : 0; }
-    
-    function debounceSearch() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => { searchFilterTable(); }, 150); 
-    }
-
-    function searchFilterTable() {
-        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        const rows = document.getElementById("productTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-        
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const brandText = row.cells[2] ? row.cells[2].innerText.toLowerCase() : ''; 
-            const companyText = row.cells[3] ? row.cells[3].innerText.toLowerCase() : '';
-            const modelText = row.cells[6] ? row.cells[6].innerText.toLowerCase() : '';
-            const nameText = row.cells[7] ? row.cells[7].innerText.toLowerCase() : '';
-            
-            if (brandText.includes(query) || companyText.includes(query) || modelText.includes(query) || nameText.includes(query)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-                const cb = row.querySelector('.row-checkbox');
-                if(cb) cb.checked = false;
-            }
-        }
-    }
-
-    function downloadTemplateXLSX() {
-        const headers = ["브랜드명", "업체명", "사방넷코드", "상태(공급중/품절/단종)", "모델명", "상품명", "공급가", "온라인판매가", "폐쇄몰판매가", "소비자가", "비고"];
-        const sampleRow = ["예시브랜드", "예시공급사", "SB-SAMPLE", "공급중", "MODEL-A", "샘플 상품명", 10000, 15000, 13500, 20000, "양식테스트"];
-        const data = [headers, sampleRow];
-        const worksheet = XLSX.utils.aoa_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "상품등록양식");
-        XLSX.writeFile(workbook, "상품대량등록_양식.xlsx");
-    }
-
-    function uploadTemplateXLSX(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            const rowsToSend = [];
-            const duplicateSabangCodes = [];
-
-            for (let i = 1; i < sheetData.length; i++) {
-                const row = sheetData[i];
-                if (!row || row.length === 0 || !row[5]) continue; 
-
-                const brand = row[0] ? String(row[0]).trim() : "-";
-                const company = row[1] ? String(row[1]).trim() : "-";
-                const sabangCode = row[2] ? String(row[2]).trim() : "-";
-                const status = row[3] ? String(row[3]).trim() : "공급중";
-                const modelName = row[4] ? String(row[4]).trim() : "-";
-                const productName = row[5] ? String(row[5]).trim() : "이름없음";
-                const costPrice = parseInt(row[6], 10) || 0;
-                const sellPrice = parseInt(row[7], 10) || 0;
-                const closedPrice = parseInt(row[8], 10) || 0; 
-                const consumerPrice = parseInt(row[9], 10) || 0;
-                const note = row[10] ? String(row[10]).trim() : "-";
-
-                if (sabangCode !== "" && sabangCode !== "-") {
-                    const existsInCurrent = products.some(p => p.sabangCode === sabangCode && p.productName !== "거래처 메모 기록용");
-                    const existsInBatch = rowsToSend.some(r => r[2] === sabangCode);
-                    
-                    if (existsInCurrent || existsInBatch) {
-                        duplicateSabangCodes.push(`행 ${i + 1} (${productName}): ${sabangCode}`);
-                        continue;
-                    }
-                }
-                rowsToSend.push([brand, company, sabangCode, status, modelName, productName, costPrice, sellPrice, closedPrice, consumerPrice, note, "-"]);
-            }
-
-            if (duplicateSabangCodes.length > 0) {
-                alert(`❌ [대량 업로드 실패] 중복된 사방넷코드가 존재합니다.\n\n[중복 목록]\n${duplicateSabangCodes.slice(0, 5).join("\n")}${duplicateSabangCodes.length > 5 ? `\n외 ${duplicateSabangCodes.length - 5}건...` : ""}\n\n시트 내 코드를 수정 후 다시 업로드해 주세요.`);
-                input.value = "";
-                return;
-            }
-
-            if (rowsToSend.length === 0) {
-                alert("업로드할 유효한 상품 데이터가 없습니다.");
-                input.value = "";
-                return;
-            }
-
-            if (confirm(`${rowsToSend.length}개의 상품을 일괄 추가하시겠습니까?`)) {
-                setStatus('saving', "📤 대량 상품 시트 업로드 및 ID 매핑 중...");
-                
-                sendDataToSheets({ action: "uploadRows", rows: rowsToSend }, function(result) {
-                    fetchDataFromSheets(false, () => {
-                        setStatus('sync', `✅ 대량 상품 ${rowsToSend.length}건 등록 및 고유 ID 생성 완료`);
-                        alert(`🎉 ${rowsToSend.length}개의 상품이 정상적으로 등록되었으며 실시간 삭제가 가능합니다.`);
-                    });
+    function fetchDataFromSheets(isManual=false,callback=null){
+        if(isManual) setStatus('saving',"🔄 최신 데이터 동기화 중...");
+        fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
+            if(data.error){ alert("시트 에러: "+data.error); }else{
+                if(data.serverPassword) cachedServerPassword=String(data.serverPassword).trim();
+                const raw=data.products || [];
+                products=raw.map((row,idx)=>{
+                    row=row||[];
+                    return {
+                        id:row.id||(idx+2), brand:row.brand||row[0]||"", company:row.company||row[1]||"", sabangCode:row.sabangCode||row[2]||"", status:row.status||row[3]||"공급중",
+                        modelName:row.modelName||row[4]||"", productName:row.productName||row[5]||"", costPrice:Number(row.costPrice!==undefined?row.costPrice:(row[6]||0)),
+                        sellPrice:Number(row.sellPrice!==undefined?row.sellPrice:(row[7]||0)), closedPrice:Number(row.closedPrice!==undefined?row.closedPrice:(row[8]||0)),
+                        consumerPrice:Number(row.consumerPrice!==undefined?row.consumerPrice:(row[9]||0)), note:row.note||row[10]||"", productLink:row.productLink||row[11]||""
+                    };
                 });
+                const uc=[...new Set(products.map(p=>p.company?String(p.company).trim():"").filter(c=>c&&c!=="-"&&c!==""))];
+                companies=uc.sort(); localStorage.setItem('md_cached_companies',JSON.stringify(companies)); localStorage.setItem('md_cached_products',JSON.stringify(products));
+                renderSidebar(); renderTable(); setStatus('sync',"🟢 실시간 동기화 완료"); if(callback) callback();
             }
-            input.value = "";
-        };
-        reader.readAsArrayBuffer(file);
+        }).catch(e=>{ setStatus('sync',"⚠️ 오프라인 모드"); });
     }
-
-    function openCalcModal() {
-        document.getElementById('calcModal').style.display = "block";
-        document.getElementById('mainContent').style.marginRight = "520px";
+    function sendDataToSheets(payload,callback){
+        setStatus('saving',"☁️ 실시간 저장 중...");
+        fetch(GAS_WEB_APP_URL,{method:"POST",body:JSON.stringify(payload)}).then(res=>res.json()).then(data=>{ if(callback) callback(data); else setStatus('sync',"✅ 변경사항 저장됨"); }).catch(e=>{ setStatus('sync',"❌ 저장 실패"); });
     }
-    function closeCalcModal() {
-        document.getElementById('calcModal').style.display = "none";
-        document.getElementById('mainContent').style.marginRight = "0px";
-    }
-    
-    function checkCalcEnter(event) { if (event.key === 'Enter') { event.target.blur(); calcAllMargins(); } }
-
-    function calcAllMargins() {
-        const supplyCost = parseFloat(document.getElementById('supplyCost').value);
-        const deliveryFee = parseFloat(document.getElementById('deliveryFee').value) || 0;
-        const sp = parseFloat(document.getElementById('sellingPrice').value);
-
-        if(isNaN(supplyCost) || isNaN(sp)) {
-            alert("공급가와 예상판매가를 모두 입력해주세요.");
-            return;
-        }
-
-        const cost = supplyCost + deliveryFee;
-        const costNet = Math.round(supplyCost / 1.1);
-        
-        document.getElementById('sumCost').innerText = supplyCost.toLocaleString();
-        document.getElementById('sumDelivery').innerText = deliveryFee.toLocaleString();
-        document.getElementById('sumTotalCost').innerText = cost.toLocaleString();
-        document.getElementById('sumCostNet').innerText = costNet.toLocaleString();
-        document.getElementById('sumSp').innerText = sp.toLocaleString();
-
-        const tbody = document.getElementById('calcResultTableBody');
-        tbody.innerHTML = ''; 
-
-        for (let feeRate = 6; feeRate <= 20; feeRate++) {
-            const rateDecimal = feeRate / 100;
-            const feeAmt = Math.round(sp * rateDecimal);
-            const settlement = sp - feeAmt;
-            const platformSupplyNet = Math.round(settlement / 1.1);
-            const marginAmt = settlement - cost;
-            const marginPct = ((marginAmt / cost) * 100).toFixed(2);
-            const statusClass = marginAmt < 0 ? 'minus bold' : 'plus bold';
-
-            const row = `
-                <tr>
-                    <td class="text-center bold">${feeRate}%</td>
-                    <td class="text-right bold">${settlement.toLocaleString()} 원</td>
-                    <td class="text-right">${platformSupplyNet.toLocaleString()} 원</td>
-                    <td class="text-right ${statusClass}">${marginPct}%</td>
-                    <td class="text-right ${statusClass}">${marginAmt.toLocaleString()} 원</td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        }
-        document.getElementById('calcResultSection').style.display = 'block';
-    }
-
-    function openNoteModal(companyName) {
-        ActiveNoteTargetCompany = companyName; 
-        document.getElementById('noteModalTitle').innerText = `🏢 [${companyName}] 특이사항 관리`;
-        document.getElementById('newNoteInput').value = ''; 
-        document.getElementById('btnSubmitNote').onclick = function() { addNoteDirectly(); };
-        refreshNoteList();
-        document.getElementById('noteModal').style.display = "block";
-    }
-
-    function refreshNoteList() {
-        const listContainer = document.getElementById('noteListBox');
-        listContainer.innerHTML = '';
-
-        const companyMemos = products.filter(p => p.company === ActiveNoteTargetCompany && 
-            (p.productName === "거래처 메모 기록용" || p.modelName === "공통") && p.note && p.note.trim() !== '-');
-
-        if(companyMemos.length === 0) {
-            listContainer.innerHTML = `<div class="note-empty">등록된 거래처 특이사항이 없습니다.</div>`;
-        } else {
-            companyMemos.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'note-item';
-                itemDiv.innerHTML = `
-                    <div class="note-text-area">
-                        • <span class="content-span">${item.note}</span>
-                    </div>
-                    <div class="note-action-btns">
-                        <button class="btn-note-edit" onclick="editNoteDirectly('${item.id}', this)">수정</button>
-                        <button class="btn-note-del" onclick="deleteNoteDirectly('${item.id}')">삭제</button>
-                    </div>
-                `;
-                listContainer.appendChild(itemDiv);
-            });
-        }
-    }
-
-    function addNoteDirectly() {
-        const inputEl = document.getElementById('newNoteInput');
-        const content = inputEl.value.trim();
-        if(!content) return;
-
-        const tempId = "temp_" + Date.now();
-        const newNoteItem = { id: tempId, brand: "-", company: ActiveNoteTargetCompany, sabangCode: "-", status: "공급중", modelName: "공통", productName: "거래처 메모 기록용", costPrice: 0, sellPrice: 0, closedPrice: 0, consumerPrice: 0, note: content, productLink: "-" };
-        
-        products.unshift(newNoteItem);
-        inputEl.value = ''; 
-        refreshNoteList();
-
-        sendDataToSheets({ action: "add", product: newNoteItem }, (result) => {
-            if (result && result.id) {
-                const idx = products.findIndex(p => String(p.id) === String(tempId));
-                if (idx !== -1) products[idx].id = result.id;
-                refreshNoteList();
+    function addNewProductRow(){
+        let tc=currentSelectedCompany==='all'?(companies[0]||"기본업체"):currentSelectedCompany, tb="-";
+        if(currentSelectedCompany!=='all'){ const mp=products.find(p=>p.company===currentSelectedCompany && p.brand && p.brand!=="-"); if(mp) tb=mp.brand; }
+        const ts="SB-"+Date.now().toString().slice(-6), ti="temp_"+Date.now();
+        const np={id:ti,brand:tb,company:tc,sabangCode:ts,status:"공급중",modelName:"-",productName:"신규 상품 (저장 중...)",costPrice:0,sellPrice:0,closedPrice:0,consumerPrice:0,note:"-",productLink:"-"};
+        products.unshift(np); renderTable();
+        sendDataToSheets({action:"add",product:np},(res)=>{
+            if(res && res.id){
+                const idx=products.findIndex(p=>String(p.id)===String(ti)); if(idx!==-1){ products[idx].id=res.id; if(products[idx].productName==="신규 상품 (저장 중...)") products[idx].productName="신규 상품"; }
+                const tr=document.querySelector(`tr[data-id="${ti}"]`); if(tr){ tr.setAttribute("data-id",res.id); const db=tr.querySelector('.btn-delete'); if(db) db.setAttribute("onclick",`deleteProduct('${res.id}')`); const nc=tr.querySelector('.name-cell'); if(nc && nc.innerText==="신규 상품 (저장 중...)") nc.innerText="신규 상품"; }
+                localStorage.setItem('md_cached_products',JSON.stringify(products));
+                renderTable();
             }
         });
     }
-
-    function editNoteDirectly(id, btnElement) {
-        const parentItem = btnElement.closest('.note-item');
-        const textSpan = parentItem.querySelector('.content-span');
-        const oldTxt = textSpan.innerText;
-        
-        const newTxt = prompt("특이사항 내용을 수정하세요:", oldTxt);
-        if (!newTxt || newTxt.trim() === '') return;
-
-        const cleanTxt = newTxt.trim();
-        textSpan.innerText = cleanTxt;
-
-        const index = products.findIndex(p => String(p.id) === String(id));
-        if(index !== -1) products[index].note = cleanTxt;
-
-        sendDataToSheets({ action: "update", id: id, field: "note", value: cleanTxt });
+    function renderSidebar(){
+        const container=document.getElementById("companyList"); container.innerHTML=`<li class="company-item ${currentSelectedCompany==='all'?'active':''}" onclick="selectCompany('all',this)"><span style="flex-grow:1;text-align:left;">전체 업체 보기</span></li>`;
+        companies.forEach(comp=>{
+            if(!comp || comp==="-") return;
+            const li=document.createElement('li'); li.className=`company-item ${currentSelectedCompany===comp?'active':''}`;
+            li.onclick=function(e){ if(e.target.closest('.btn-company-note')) return; selectCompany(comp,this); };
+            li.ondblclick=function(){ renameCompanyPrompt(comp); };
+            li.innerHTML=`<span style="flex-grow:1;text-align:left;">🏭 ${comp}</span><button class="btn-company-note" title="특이사항" onclick="openNoteModal('${comp}')">📝</button>`;
+            container.appendChild(li);
+        });
     }
-
-    function deleteNoteDirectly(id) {
-        if(!confirm("이 특이사항 기록을 삭제하시겠습니까?")) return;
-
-        const index = products.findIndex(p => String(p.id) === String(id));
-        if(index !== -1) {
-            products.splice(index, 1);
-            sendDataToSheets({ action: "delete", id: id }, () => { refreshNoteList(); });
+    function selectStatusFilter(st){ currentSelectedStatus=st; const tabs=document.querySelectorAll('.filter-tab'); tabs.forEach(t=>t.classList.toggle('active',t.getAttribute('data-status')===st)); document.getElementById('selectAllCheckbox').checked=false; renderTable(); }
+    function renderTable(){
+        const tbody=document.getElementById("productTable").getElementsByTagName('tbody')[0]; tbody.innerHTML=""; const frag=document.createDocumentFragment(); let vIdx=1;
+        products.forEach(prod=>{
+            if(prod.productName==="거래처 메모 기록용" || prod.modelName==="공통") return;
+            if(currentSelectedCompany!=='all' && String(prod.company).trim()!==String(currentSelectedCompany).trim()) return;
+            if(currentSelectedStatus!=='all' && prod.status!==currentSelectedStatus) return;
+            const row=document.createElement('tr'); row.setAttribute("data-id",prod.id);
+            row.onclick=function(e){ if(e.target.tagName==='BUTTON'||e.target.tagName==='A'||e.target.tagName==='SELECT'||e.target.type==='checkbox'||e.target.isContentEditable)return; for(let r of tbody.getElementsByTagName('tr')) r.classList.remove('selected-row'); row.classList.add('selected-row'); };
+            row.insertCell(0).innerHTML=`<input type="checkbox" class="row-checkbox">`;
+            const cN=row.insertCell(1); cN.className="num-cell"; cN.innerText=vIdx++;
+            const cB=row.insertCell(2); cB.className="brand-cell"; cB.contentEditable="true"; cB.innerText=prod.brand||"-"; cB.onkeydown=handlePreventEnter; cB.onblur=function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"brand",value:this.innerText.trim()});};
+            const cC=row.insertCell(3); cC.className="company-cell"; cC.contentEditable="true"; cC.innerText=prod.company||"-"; cC.onkeydown=handlePreventEnter; cC.onfocus=function(){oldCompanyValue=this.innerText.trim();}; cC.onblur=function(){const n=this.innerText.trim(); if(oldCompanyValue!==n){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"company",value:n},()=>fetchDataFromSheets(false));}};
+            const cS=row.insertCell(4); cS.className="sabang-cell"; cS.contentEditable="true"; cS.innerText=prod.sabangCode||"-"; cS.onkeydown=handlePreventEnter; cS.onfocus=function(){oldSabangValue=this.innerText.trim();}; cS.onblur=function(){const n=this.innerText.trim(), cid=row.getAttribute("data-id"); if(n===oldSabangValue)return; if(n!==""&&n!=="-"){if(products.some(p=>String(p.id)!==String(cid)&&p.sabangCode===n&&p.productName!=="거래처 메모 기록용")){alert(`⚠️ 중복 사방넷코드`); this.innerText=oldSabangValue; return;}} const idx=products.findIndex(p=>String(p.id)===String(cid)); if(idx!==-1)products[idx].sabangCode=n; sendDataToSheets({action:"update",id:cid,field:"sabangCode",value:n});};
+            const cSt=row.insertCell(5); const sv=prod.status||"공급중"; let sc="status-active"; if(sv==="품절")sc="status-soldout"; else if(sv==="단종")sc="status-discontinued";
+            cSt.innerHTML=`<select class="status-select ${sc}" onchange="changeProductStatus('${prod.id}',this)"><option value="공급중" ${sv==="공급중"?"selected":""}>공급중</option><option value="품절" ${sv==="품절"?"selected":""}>품절</option><option value="단종" ${sv==="단종"?"selected":""}>단종</option></select>`;
+            const cM=row.insertCell(6); cM.className="model-cell"; cM.contentEditable="true"; cM.innerText=prod.modelName||"-"; cM.title=prod.modelName||"-"; cM.onkeydown=handlePreventEnter; cM.onblur=function(){const v=this.innerText.trim(); this.title=v; sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"modelName",value:v});};
+            const cNm=row.insertCell(7); cNm.className="name-cell"; cNm.style.textAlign="left"; cNm.contentEditable="true"; cNm.innerText=prod.productName||"-"; cNm.title=prod.productName||"-"; cNm.onkeydown=handlePreventEnter; cNm.onblur=function(){const v=this.innerText.trim(); this.title=v; sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"productName",value:v});};
+            const cCo=row.insertCell(8); cCo.className="price"; cCo.contentEditable="true"; cCo.innerText=(prod.costPrice||0).toLocaleString()+'원'; cCo.onkeydown=handlePreventEnter; cCo.oninput=function(){recalculateRowMargins(row);}; cCo.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"costPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
+            const cSe=row.insertCell(9); cSe.className="price"; cSe.contentEditable="true"; cSe.innerText=(prod.sellPrice||0).toLocaleString()+'원'; cSe.onkeydown=handlePreventEnter; cSe.oninput=function(){recalculateRowMargins(row);}; cSe.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"sellPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
+            const cOm=row.insertCell(10); cOm.className="margin-cell"; const om=prod.sellPrice>0?((prod.sellPrice-prod.costPrice)/prod.sellPrice*100):0; cOm.innerText=om.toFixed(1)+'%';
+            const cCl=row.insertCell(11); cCl.className="price"; cCl.contentEditable="true"; cCl.innerText=(prod.closedPrice||0).toLocaleString()+'원'; cCl.onkeydown=handlePreventEnter; cCl.oninput=function(){recalculateRowMargins(row);}; cCl.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"closedPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
+            const cCm=row.insertCell(12); cCm.className="margin-closed-cell"; const cm=prod.closedPrice>0?((prod.closedPrice-prod.costPrice)/prod.closedPrice*100):0; cCm.innerText=cm.toFixed(1)+'%';
+            const cCn=row.insertCell(13); cCn.className="price"; cCn.contentEditable="true"; cCn.innerText=(prod.consumerPrice||0).toLocaleString()+'원'; cCn.onkeydown=handlePreventEnter; cCn.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"consumerPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
+            const cNo=row.insertCell(14); cNo.contentEditable="true"; cNo.style.textAlign="left"; cNo.innerText=prod.note||"-"; cNo.onkeydown=handlePreventEnter; cNo.onblur=function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"note",value:this.innerText.trim()});};
+            
+            const cLk=row.insertCell(15); const searchStr=prod.productName!==undefined&&prod.productName!==null?String(prod.productName).trim():"";
+            // 🔒 [보안 가드 인터셉터 구현]: 저장 중일 때는 네이버 검색창 진입을 원천 방어하고 모달 팝업 알림 작동
+            if (searchStr.includes("저장 중")) {
+                cLk.innerHTML=`<button class="btn-link-go" style="background-color:#95a5a6; cursor:not-allowed;" onclick="alert('⚠️ 상품 정보가 구글 시트에 안전하게 등록 처리 중입니다. 1~2초 후 글자가 바뀌면 다시 클릭해 주세요!')">🔍 대기</button>`;
+            } else {
+                cLk.innerHTML=`<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query='+encodeURIComponent('${searchStr.replace(/'/g,"\\'")}'), '_blank')">🔍 검색</button>`;
+            }
+            
+            row.insertCell(16).innerHTML=`<button class="btn-delete" onclick="deleteProduct('${prod.id}')">삭제</button>`;
+            frag.appendChild(row);
+        });
+        tbody.appendChild(frag); searchFilterTable();
+    }
+    function handlePreventEnter(e){ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } }
+    function changeProductStatus(id,selectEl){
+        const nv=selectEl.value; selectEl.className=`status-select ${nv==='공급중'?'status-active':nv==='품절'?'status-soldout':'status-discontinued'}`;
+        const idx=products.findIndex(p=>String(p.id)===String(id)); if(idx!==-1) products[idx].status=nv;
+        sendDataToSheets({action:"update",id:id,field:"status",value:nv},()=>{ if(currentSelectedStatus!=='all') renderTable(); });
+    }
+    function selectCompany(name,el){ currentSelectedCompany=name; document.getElementById('currentViewTitle').innerText=name==='all'?"통합 상품 가격 리스트":`[${name}] 공급업체 상품 표`; document.getElementById('selectAllCheckbox').checked=false; renderSidebar(); renderTable(); }
+    function deleteProduct(id){
+        if(String(id).startsWith("temp_")){ alert("⚠️ 안전하게 시트에 등록 처리 중입니다. 잠시 후 시도하세요."); return; }
+        if(confirm("정말 삭제하시겠습니까?")){
+            const r=document.querySelector(`tr[data-id="${id}"]`); if(r) r.style.opacity="0.3";
+            products=products.filter(p=>String(p.id)!==String(id)); localStorage.setItem('md_cached_products',JSON.stringify(products));
+            sendDataToSheets({action:"delete",id:id},()=>{ if(r)r.remove(); setStatus('sync',"✅ 구글 시트 삭제 완료"); renderTable(); });
         }
     }
-
-    function closeNoteModal() { document.getElementById('noteModal').style.display = "none"; }
-
-    window.onclick = function(event) {
-        const nModal = document.getElementById('noteModal');
-        const cModal = document.getElementById('calcModal');
-        if (event.target == nModal) nModal.style.display = "none";
-        if (event.target == cModal) closeCalcModal();
+    function renameCompanyPrompt(oldN){ const n=prompt(`[${oldN}]의 새로운 업체명 입력:`,oldN); if(!n||n.trim()===""||n.trim()===oldN)return; sendDataToSheets({action:"renameBrand",oldName:oldN,newName:n.trim()},()=>{fetchDataFromSheets(false);}); }
+    function addCompanyPrompt(){
+        const n=prompt("추가할 새로운 업체명 입력:"); if(!n||n.trim()==="")return; const cn=n.trim();
+        if(!companies.includes(cn)){
+            companies.push(cn); companies.sort(); const di="temp_comp_"+Date.now();
+            const dummy={id:di,brand:"-",company:cn,sabangCode:"-",status:"공급중",modelName:"공통",productName:"거래처 메모 기록용",costPrice:0,sellPrice:0,closedPrice:0,consumerPrice:0,note:"신규 등록 업체",productLink:"-"};
+            products.unshift(dummy); localStorage.setItem('md_cached_companies',JSON.stringify(companies)); localStorage.setItem('md_cached_products',JSON.stringify(products));
+            renderSidebar(); selectCompany(cn,null); sendDataToSheets({action:"add",product:dummy},()=>{fetchDataFromSheets(false);});
+        }else{ selectCompany(cn,null); }
     }
+    function clearAllData(){ if(confirm("⚠️ 모든 데이터를 일괄 삭제하시겠습니까?")) sendDataToSheets({action:"clear"},()=>{ localStorage.clear(); fetchDataFromSheets(false); }); }
+    function recalculateRowMargins(row){
+        const cost=parseNumber(row.cells[8].innerText), online=parseNumber(row.cells[9].innerText), closed=parseNumber(row.cells[11].innerText);
+        row.cells[10].innerText=online>0?(((online-cost)/online)*100).toFixed(1)+'%':'0.0%'; row.cells[12].innerText=closed>0?(((closed-cost)/closed)*100).toFixed(1)+'%':'0.0%';
+    }
+    function parseNumber(text){ return text ? parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0 : 0; }
+    function debounceSearch(){ clearTimeout(searchTimeout); searchTimeout=setTimeout(()=>{ searchFilterTable(); },150); }
+    function searchFilterTable(){
+        const q=document.getElementById('searchInput').value.toLowerCase().trim(); const rows=document.getElementById("productTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        for(let i=0;i<rows.length;i++){
+            const r=rows[i], b=r.cells[2]?r.cells[2].innerText.toLowerCase():'', c=r.cells[3]?r.cells[3].innerText.toLowerCase():'', m=r.cells[6]?r.cells[6].innerText.toLowerCase():'', n=r.cells[7]?r.cells[7].innerText.toLowerCase():'';
+            if(b.includes(q)||c.includes(q)||m.includes(q)||n.includes(q)){ r.style.display=""; }else{ r.style.display="none"; const cb=r.querySelector('.row-checkbox'); if(cb)cb.checked=false; }
+        }
+    }
+    function downloadTemplateXLSX(){
+        const h=["브랜드명","업체명","사방넷코드","상태(공급중/품절/단종)","모델명","상품명","공급가","온라인판매가","폐쇄몰판매가","소비자가","비고"], s=["예시브랜드","예시공급사","SB-SAMPLE","공급중","MODEL-A","샘플 상품명",10000,15000,13500,20000,"양식테스트"];
+        const ws=XLSX.utils.aoa_to_sheet([h,s]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"상품등록양식"); XLSX.writeFile(wb, "상품대량등록_양식.xlsx");
+    }
+    function uploadTemplateXLSX(input){
+        const file=input.files[0]; if(!file)return; const reader=new FileReader();
+        reader.onload=function(e){
+            const data=new Uint8Array(e.target.result), wb=XLSX.read(data,{type:'array'}), ws=wb.Sheets[wb.SheetNames[0]], sd=XLSX.utils.sheet_to_json(ws,{header:1}), rowsToSend=[], dup=[];
+            for(let i=1;i<sd.length;i++){
+                const r=sd[i]; if(!r||r.length===0||!r[5])continue;
+                const b=r[0]?String(r[0]).trim():"-", c=r[1]?String(r[1]).trim():"-", s=r[2]?String(r[2]).trim():"-", st=r[3]?String(r[3]).trim():"공급중", m=r[4]?String(r[4]).trim():"-", n=r[5]?String(r[5]).trim():"이름없음", cp=parseInt(r[6],10)||0, sp=parseInt(r[7],10)||0, cl=parseInt(r[8],10)||0, cs=parseInt(r[9],10)||0, nt=r[10]?String(r[10]).trim():"-";
+                if(s!==""&&s!=="-"){ if(products.some(p=>p.sabangCode===s&&p.productName!=="거래처 메모 기록용")||rowsToSend.some(x=>x[2] === s)){ dup.push(`행 ${i+1} (${n}): ${s}`); continue; } }
+                rowsToSend.push([b,c,s,st,m,n,cp,sp,cl,cs,nt,"-"]);
+            }
+            if(dup.length>0){ alert(`❌ 중복 사방넷코드 발견:\n${dup.slice(0,5).join("\n")}`); input.value=""; return; }
+            if(rowsToSend.length===0){ alert("유효한 상품 데이터가 없습니다."); input.value=""; return; }
+            if(confirm(`${rowsToSend.length}개의 상품을 일괄 추가하시겠습니까?`)){ setStatus('saving',"📤 업로드 중..."); sendDataToSheets({action:"uploadRows",rows:rowsToSend},()=>{ fetchDataFromSheets(false,()=>{ setStatus('sync',`✅ ${rowsToSend.length}건 완료`); alert(`🎉 정상 등록 완료되었습니다.`); }); }); }
+            input.value="";
+        }; reader.readAsArrayBuffer(file);
+    }
+    function openCalcModal(){ document.getElementById('calcModal').style.display="block"; document.getElementById('mainContent').style.marginRight="520px"; }
+    function closeCalcModal(){ document.getElementById('calcModal').style.display="none"; document.getElementById('mainContent').style.marginRight="0px"; }
+    function checkCalcEnter(e){ if(e.key==='Enter'){ e.target.blur(); calcAllMargins(); } }
+    function calcAllMargins(){
+        const sc=parseFloat(document.getElementById('supplyCost').value), df=parseFloat(document.getElementById('deliveryFee').value)||0, sp=parseFloat(document.getElementById('sellingPrice').value);
+        if(isNaN(sc)||isNaN(sp)){ alert("공급가와 예상판매가를 모두 입력해주세요."); return; }
+        const cost=sc+df, cn=Math.round(sc/1.1); document.getElementById('sumCost').innerText=sc.toLocaleString(); document.getElementById('sumDelivery').innerText=df.toLocaleString(); document.getElementById('sumTotalCost').innerText=cost.toLocaleString(); document.getElementById('sumCostNet').innerText=cn.toLocaleString(); document.getElementById('sumSp').innerText=sp.toLocaleString();
+        const tbody=document.getElementById('calcResultTableBody'); tbody.innerHTML='';
+        for(let rate=6;rate<=20;rate++){
+            const fa=Math.round(sp*(rate/100)), st=sp-fa, psn=Math.round(st/1.1), ma=st-cost, mp=((ma/cost)*100).toFixed(2);
+            tbody.innerHTML+=`<tr><td class="text-center bold">${rate}%</td><td class="text-right bold">${st.toLocaleString()} 원</td><td class="text-right">${psn.toLocaleString()} 원</td><td class="text-right ${ma<0?'minus bold':'plus bold'}">${mp}%</td><td class="text-right ${ma<0?'minus bold':'plus bold'}">${ma.toLocaleString()} 원</td></tr>`;
+        }
+        document.getElementById('calcResultSection').style.display='block';
+    }
+    function openNoteModal(name){ ActiveNoteTargetCompany=name; document.getElementById('noteModalTitle').innerText=`🏢 [${name}] 특이사항 관리`; document.getElementById('newNoteInput').value=''; document.getElementById('btnSubmitNote').onclick=addNoteDirectly; refreshNoteList(); document.getElementById('noteModal').style.display="block"; }
+    function refreshNoteList(){
+        const box=document.getElementById('noteListBox'); box.innerHTML=''; const memos=products.filter(p=>p.company===ActiveNoteTargetCompany && (p.productName==="거래처 메모 기록용"||p.modelName==="공통") && p.note && p.note.trim()!=='-');
+        if(memos.length===0){ box.innerHTML=`<div class="note-empty">등록된 특이사항이 없습니다.</div>`; }else{
+            memos.forEach(item=>{
+                const div=document.createElement('div'); div.className='note-item'; div.innerHTML=`<div class="note-text-area">• <span class="content-span">${item.note}</span></div><div class="note-action-btns"><button class="btn-note-edit" onclick="editNoteDirectly('${item.id}',this)">수정</button><button class="btn-note-del" onclick="deleteNoteDirectly('${item.id}')">삭제</button></div>`; box.appendChild(div);
+            });
+        }
+    }
+    function addNoteDirectly(){
+        const input=document.getElementById('newNoteInput'), c=input.value.trim(); if(!c)return; const ti="temp_"+Date.now();
+        const item={id:ti,brand:"-",company:ActiveNoteTargetCompany,sabangCode:"-",status:"공급중",modelName:"공통",productName:"거래처 메모 기록용",costPrice:0,sellPrice:0,closedPrice:0,consumerPrice:0,note:c,productLink:"-"};
+        products.unshift(item); input.value=''; refreshNoteList(); sendDataToSheets({action:"add",product:item},(res)=>{ if(res&&res.id){ const idx=products.findIndex(p=>String(p.id)===String(ti)); if(idx!==-1)products[idx].id=res.id; refreshNoteList(); } });
+    }
+    function editNoteDirectly(id,btn){
+        const span=btn.closest('.note-item').querySelector('.content-span'), oldT=span.innerText; const newT=prompt("수정할 내용 입력:",oldT); if(!newT||newT.trim()==='')return;
+        span.innerText=newT.trim(); const idx=products.findIndex(p=>String(p.id)===String(id)); if(idx!==-1)products[idx].note=newT.trim(); sendDataToSheets({action:"update",id:id,field:"note",value:newT.trim()});
+    }
+    function deleteNoteDirectly(id){ if(!confirm("이 기록을 삭제하시겠습니까?")){return;} const idx=products.findIndex(p=>String(p.id)===String(id)); if(idx!==-1){ products.splice(idx,1); sendDataToSheets({action:"delete",id:id},refreshNoteList); } }
+    function closeNoteModal(){ document.getElementById('noteModal').style.display="none"; }
+    window.onclick=function(e){ if(e.target==document.getElementById('noteModal')) closeNoteModal(); if(e.target==document.getElementById('calcModal')) closeCalcModal(); }
 </script>
 </body>
 </html>
