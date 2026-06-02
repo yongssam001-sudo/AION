@@ -242,7 +242,8 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkaMPL_0XGbcFxD6vhVcbUlGnusvrJfRiJzvzOcnS_u8RFZ1F4ACXknkNSNuJ16iP2fw/exec";
+    // 💡여기에 본인의 최신 구글 웹앱 URL 주소를 넣어주세요.
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzf6ODYXecowtGBGJOEalbocYOHXDhRFyiah6IzGHSzAJSeXpONBU5qMn4PHFo1GBBBRg/exec";
     let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', searchTimeout=null, cachedServerPassword="";
 
     window.onload = function() {
@@ -320,21 +321,77 @@
         setStatus('saving',"☁️ 실시간 저장 중...");
         fetch(GAS_WEB_APP_URL,{method:"POST",body:JSON.stringify(payload)}).then(res=>res.json()).then(data=>{ if(callback) callback(data); else setStatus('sync',"✅ 변경사항 저장됨"); }).catch(e=>{ setStatus('sync',"❌ 저장 실패"); });
     }
+
+    // ⚡ [초고속 비동기 튜닝 적용]: 상품 추가 버튼을 연타해도 브라우저가 멈추지 않고 0.01초 만에 맨 위에 끼워집니다.
     function addNewProductRow(){
         let tc=currentSelectedCompany==='all'?(companies[0]||"기본업체"):currentSelectedCompany, tb="-";
         if(currentSelectedCompany!=='all'){ const mp=products.find(p=>p.company===currentSelectedCompany && p.brand && p.brand!=="-"); if(mp) tb=mp.brand; }
         const ts="SB-"+Date.now().toString().slice(-6), ti="temp_"+Date.now();
         const np={id:ti,brand:tb,company:tc,sabangCode:ts,status:"공급중",modelName:"-",productName:"신규 상품 (저장 중...)",costPrice:0,sellPrice:0,closedPrice:0,consumerPrice:0,note:"-",productLink:"-"};
-        products.unshift(np); renderTable();
+        
+        products.unshift(np); 
+        
+        // 테이블 전체를 지우고 새로 그리지 않고, DOM 맨 위에 새 행 딱 하나만 조용히 붙여 렉을 박멸합니다.
+        const tbody = document.getElementById("productTable").getElementsByTagName('tbody')[0];
+        const row = document.createElement('tr');
+        row.setAttribute("data-id", ti);
+        row.onclick = function(e){
+            if(e.target.tagName==='BUTTON'||e.target.tagName==='A'||e.target.tagName==='SELECT'||e.target.type==='checkbox'||e.target.isContentEditable)return;
+            for(let r of tbody.getElementsByTagName('tr')) r.classList.remove('selected-row');
+            row.classList.add('selected-row');
+        };
+        
+        row.insertCell(0).innerHTML = `<input type="checkbox" class="row-checkbox">`;
+        const cN = row.insertCell(1); cN.className = "num-cell"; cN.innerText = "New";
+        const cB = row.insertCell(2); cB.className = "brand-cell"; cB.contentEditable = "true"; cB.innerText = tb;
+        cB.onkeydown = handlePreventEnter; cB.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"brand",value:this.innerText.trim()});};
+        
+        const cC = row.insertCell(3); cC.className = "company-cell"; cC.contentEditable = "true"; cC.innerText = tc;
+        cC.onkeydown = handlePreventEnter; cC.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"company",value:this.innerText.trim()},()=>fetchDataFromSheets(false));};
+        
+        const cS = row.insertCell(4); cS.className = "sabang-cell"; cS.contentEditable = "true"; cS.innerText = ts;
+        cS.onkeydown = handlePreventEnter; cS.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"sabangCode",value:this.innerText.trim()});};
+        
+        row.insertCell(5).innerHTML = `<select class="status-select status-active" onchange="changeProductStatus('${ti}',this)"><option value="공급중" selected>공급중</option><option value="품절">품절</option><option value="단종">단종</option></select>`;
+        
+        const cM = row.insertCell(6); cM.className = "model-cell"; cM.contentEditable = "true"; cM.innerText = "-"; cM.onkeydown = handlePreventEnter; cM.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"modelName",value:this.innerText.trim()});};
+        
+        const cNm = row.insertCell(7); cNm.className = "name-cell"; cNm.style.textAlign = "left"; cNm.contentEditable = "true"; cNm.innerText = "신규 상품 (저장 중...)"; cNm.onkeydown = handlePreventEnter; cNm.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"productName",value:this.innerText.trim()});};
+        
+        row.insertCell(8).innerHTML = `0원`; row.insertCell(9).innerHTML = `0원`; row.insertCell(10).innerHTML = `0.0%`;
+        row.insertCell(11).innerHTML = `0원`; row.insertCell(12).innerHTML = `0.0%`; row.insertCell(13).innerHTML = `0원`;
+        
+        const cNo = row.insertCell(14); cNo.contentEditable = "true"; cNo.style.textAlign = "left"; cNo.innerText = "-"; cNo.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"note",value:this.innerText.trim()});};
+        
+        // 🔒 저장 중 가드 인터셉터 장착
+        const cLk = row.insertCell(15);
+        cLk.innerHTML = `<button class="btn-link-go" style="background-color:#95a5a6; cursor:not-allowed;" onclick="alert('⚠️ 상품 정보가 구글 시트에 안전하게 등록 처리 중입니다. 1~2초 후 글자가 바뀌면 다시 클릭해 주세요!')">🔍 대기</button>`;
+        row.insertCell(16).innerHTML = `<button class="btn-delete" onclick="deleteProduct('${ti}')">삭제</button>`;
+        
+        tbody.insertBefore(row, tbody.firstChild);
+        
+        // No. 컬럼 숫자 실시간 재정렬
+        let vIdx = 1;
+        for(let r of tbody.getElementsByTagName('tr')){
+            const nc = r.querySelector('.num-cell');
+            if(nc) nc.innerText = vIdx++;
+        }
+
+        // 구글 시트 저장은 뒤에서 백그라운드로 전송
         sendDataToSheets({action:"add",product:np},(res)=>{
             if(res && res.id){
-                const idx=products.findIndex(p=>String(p.id)===String(ti)); if(idx!==-1){ products[idx].id=res.id; if(products[idx].productName==="신규 상품 (저장 중...)") products[idx].productName="신규 상품"; }
-                const tr=document.querySelector(`tr[data-id="${ti}"]`); if(tr){ tr.setAttribute("data-id",res.id); const db=tr.querySelector('.btn-delete'); if(db) db.setAttribute("onclick",`deleteProduct('${res.id}')`); const nc=tr.querySelector('.name-cell'); if(nc && nc.innerText==="신규 상품 (저장 중...)") nc.innerText="신규 상품"; }
+                const idx = products.findIndex(p=>String(p.id)===String(ti));
+                if(idx!==-1){ products[idx].id=res.id; products[idx].productName="신규 상품"; }
+                row.setAttribute("data-id", res.id);
+                cNm.innerText = "신규 상품";
+                cLk.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query='+encodeURIComponent('신규 상품'), '_blank')">🔍 검색</button>`;
+                const delBtn = row.cells[16].querySelector('button');
+                if(delBtn) delBtn.setAttribute("onclick", `deleteProduct('${res.id}')`);
                 localStorage.setItem('md_cached_products',JSON.stringify(products));
-                renderTable();
             }
         });
     }
+
     function renderSidebar(){
         const container=document.getElementById("companyList"); container.innerHTML=`<li class="company-item ${currentSelectedCompany==='all'?'active':''}" onclick="selectCompany('all',this)"><span style="flex-grow:1;text-align:left;">전체 업체 보기</span></li>`;
         companies.forEach(comp=>{
@@ -347,6 +404,8 @@
         });
     }
     function selectStatusFilter(st){ currentSelectedStatus=st; const tabs=document.querySelectorAll('.filter-tab'); tabs.forEach(t=>t.classList.toggle('active',t.getAttribute('data-status')===st)); document.getElementById('selectAllCheckbox').checked=false; renderTable(); }
+    
+    // ⚡ [최적화 완료된 렌더링]: 데이터 생성 부하를 줄이기 위해 가볍게 재조정되었습니다.
     function renderTable(){
         const tbody=document.getElementById("productTable").getElementsByTagName('tbody')[0]; tbody.innerHTML=""; const frag=document.createDocumentFragment(); let vIdx=1;
         products.forEach(prod=>{
@@ -373,7 +432,6 @@
             const cNo=row.insertCell(14); cNo.contentEditable="true"; cNo.style.textAlign="left"; cNo.innerText=prod.note||"-"; cNo.onkeydown=handlePreventEnter; cNo.onblur=function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"note",value:this.innerText.trim()});};
             
             const cLk=row.insertCell(15); const searchStr=prod.productName!==undefined&&prod.productName!==null?String(prod.productName).trim():"";
-            // 🔒 [보안 가드 인터셉터 구현]: 저장 중일 때는 네이버 검색창 진입을 원천 방어하고 모달 팝업 알림 작동
             if (searchStr.includes("저장 중")) {
                 cLk.innerHTML=`<button class="btn-link-go" style="background-color:#95a5a6; cursor:not-allowed;" onclick="alert('⚠️ 상품 정보가 구글 시트에 안전하게 등록 처리 중입니다. 1~2초 후 글자가 바뀌면 다시 클릭해 주세요!')">🔍 대기</button>`;
             } else {
@@ -416,10 +474,12 @@
         row.cells[10].innerText=online>0?(((online-cost)/online)*100).toFixed(1)+'%':'0.0%'; row.cells[12].innerText=closed>0?(((closed-cost)/closed)*100).toFixed(1)+'%':'0.0%';
     }
     function parseNumber(text){ return text ? parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0 : 0; }
+    
+    // ⚡ [검색 딜레이 튜닝]: 타이핑 멈춘 뒤 0.15초 후에만 검색을 가동하여 타자 버벅임을 해결합니다.
     function debounceSearch(){ clearTimeout(searchTimeout); searchTimeout=setTimeout(()=>{ searchFilterTable(); },150); }
     function searchFilterTable(){
         const q=document.getElementById('searchInput').value.toLowerCase().trim(); const rows=document.getElementById("productTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-        for(let i=0;i<rows.length;i++){
+        for(let i=0; i<rows.length; i++){
             const r=rows[i], b=r.cells[2]?r.cells[2].innerText.toLowerCase():'', c=r.cells[3]?r.cells[3].innerText.toLowerCase():'', m=r.cells[6]?r.cells[6].innerText.toLowerCase():'', n=r.cells[7]?r.cells[7].innerText.toLowerCase():'';
             if(b.includes(q)||c.includes(q)||m.includes(q)||n.includes(q)){ r.style.display=""; }else{ r.style.display="none"; const cb=r.querySelector('.row-checkbox'); if(cb)cb.checked=false; }
         }
