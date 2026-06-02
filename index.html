@@ -243,7 +243,7 @@
 
 <script>
     // 💡여기에 본인의 최신 구글 웹앱 URL 주소를 넣어주세요.
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzf6ODYXecowtGBGJOEalbocYOHXDhRFyiah6IzGHSzAJSeXpONBU5qMn4PHFo1GBBBRg/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh7HaigVafOF-WfVGgAtxXFILFl5u4ciWXF1xOaQspYbSyEpHQxaCYPTF_b0bBwGdW/exec";
     let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', searchTimeout=null, cachedServerPassword="";
 
     window.onload = function() {
@@ -256,7 +256,7 @@
         msgEl.style.color="#2196F3"; msgEl.innerText="비밀번호 인증 확인 중...";
         if(cachedServerPassword && inputVal===cachedServerPassword){ proceedAccess(); return; }
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
-            const sheetPassword = data.serverPassword ? String(data.serverPassword).trim() : "1234";
+            const sheetPassword = data.serverPassword ? String(data.serverPassword).trim() : "2369";
             cachedServerPassword = sheetPassword;
             if(inputVal===sheetPassword){ proceedAccess(); }
             else{ msgEl.style.color="#e74c3c"; msgEl.innerText="❌ 비밀번호가 일치하지 않습니다."; inputEl.value=""; inputEl.focus(); }
