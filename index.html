@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AION 상품가격관리</title>
+  <title>AION 상품 가격 관리 시스템 (최종 최적화 에디션)</title>
   <style>
-    /* 기본 스타일 정의 */
     :root {
       --primary-color: #4f46e5;
       --primary-hover: #4338ca;
@@ -18,111 +17,118 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; }
     
-    /* 🔒 로그인 오버레이 관련 스타일 */
+    /* 🔒 로그인 화면 */
     #loginOverlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999;
+      background: rgba(255, 255, 255, 0.96); display: flex; justify-content: center; align-items: center; z-index: 9999;
     }
     .login-box {
-      background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       text-align: center; width: 100%; max-width: 400px; border: 1px solid var(--border-color);
     }
-    .login-box h2 { margin-bottom: 20px; color: var(--primary-color); }
+    .login-box h2 { margin-bottom: 12px; color: var(--primary-color); font-size: 22px; }
+    .login-box p { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
     .login-box input {
-      width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color);
-      border-radius: 6px; font-size: 16px; text-align: center;
+      width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--border-color);
+      border-radius: 6px; font-size: 16px; text-align: center; outline: none;
     }
+    .login-box input:focus { border-color: var(--primary-color); }
     .login-box button {
       width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none;
       border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background 0.2s;
     }
     .login-box button:hover { background: var(--primary-hover); }
 
-    /* 📱 메인 콘텐츠 레이아웃 */
+    /* 💻 메인 대시보드 */
     #mainContent { display: none; max-width: 1600px; margin: 0 auto; }
     header { margin-bottom: 25px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; }
     header h1 { font-size: 24px; color: var(--primary-color); }
     
-    /* 컨트롤 영역 (검색창 및 버튼그룹) */
     .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
-    .search-group { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
+    
+    /* 🔍 검색 영역 */
+    .search-group { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 500px; }
     .search-group input {
-      flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;
+      flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none;
     }
+    .search-group input:focus { border-color: var(--primary-color); }
     .search-group button {
-      padding: 10px 16px; background: var(--primary-color); color: white; border: none;
-      border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;
+      padding: 10px 18px; background: var(--primary-color); color: white; border: none;
+      border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: background 0.2s;
     }
     .search-group button:hover { background: var(--primary-hover); }
     
     .btn-group { display: flex; gap: 10px; }
     .btn {
-      padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold;
-      cursor: pointer; transition: background 0.2s;
+      padding: 10px 18px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold;
+      cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 6px;
     }
     .btn-primary { background: var(--primary-color); color: white; }
     .btn-primary:hover { background: var(--primary-hover); }
     .btn-secondary { background: #6b7280; color: white; }
     .btn-secondary:hover { background: #555b66; }
 
-    /* 📊 데이터 테이블 스타일 */
+    /* 📊 데이터 테이블 */
     .table-container { background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1200px; }
     th, td { padding: 12px; border-bottom: 1px solid var(--border-color); }
     th { background-color: #f3f4f6; color: var(--text-muted); font-weight: bold; position: sticky; top: 0; }
     tr:hover { background-color: #f9fafb; }
     
-    /* 상품명 한 줄 처리 및 링크 스타일 */
     .prod-name {
-      max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       color: #2563eb; cursor: pointer; text-decoration: none; font-weight: 500;
     }
     .prod-name:hover { text-decoration: underline; }
 
-    /* 📥 상품 등록 팝업 모달 스타일 */
+    /* 📥 상품 등록 모달 팝업 */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 10000;
+      background: rgba(0, 0, 0, 0.4); display: flex; justify-content: center; align-items: center; z-index: 10000;
     }
     .modal-content {
-      background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 500px;
+      background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 520px;
       box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color);
+      animation: fadeIn 0.2s ease-out;
     }
-    .modal-content h3 { margin-bottom: 20px; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    
+    .modal-content h3 { margin-bottom: 20px; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
     .form-group { display: flex; flex-direction: column; }
     .form-group.full-width { grid-column: span 2; }
-    .form-group label { font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; }
+    .form-group label { font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
     .form-group input, .form-group select {
-      padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;
+      padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none;
     }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 18px; }
   </style>
 </head>
 <body>
 
   <div id="loginOverlay">
     <div class="login-box">
-      <h2>AION 시스템접속</h2>
-      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">보안을 위해 비밀번호를 입력하세요.</p>
-      <input type="password" id="passwordInput" placeholder="비밀번호 입력">
+      <h2>AION 시스템 접속</h2>
+      <p>보안 관리를 위해 비밀번호를 입력해 주세요.</p>
+      <input type="password" id="passwordInput" placeholder="비밀번호 입력" autocomplete="off">
       <button id="loginButton">🔐 시스템 접속하기</button>
     </div>
   </div>
 
   <div id="mainContent">
     <header>
-      <h1>AION 상품가격 및 공급상태관리</h1>
+      <h1>AION 상품 가격 및 공급 상태 관리 테이블</h1>
     </header>
 
     <div class="controls">
       <div class="search-group">
-        <input type="text" id="searchInput" placeholder="검색어를 입력 후 엔터나 버튼을 누르세요...">
+        <input type="text" id="searchInput" placeholder="검색어 입력 후 엔터키 또는 검색 버튼을 누르세요...">
         <button id="searchButton">🔍 검색</button>
       </div>
       
       <div class="btn-group">
-        <button class="btn btn-primary" id="openRegModalBtn">📦 개별상품등록</button>
+        <button class="btn btn-primary" id="openRegModalBtn">➕ 개별 상품 등록</button>
         <button class="btn btn-secondary" id="refreshBtn">🔄 새로고침</button>
       </div>
     </div>
@@ -133,14 +139,14 @@
           <tr>
             <th style="width: 5%">ID</th>
             <th style="width: 8%">브랜드</th>
-            <th style="width: 10%">제조사</th>
-            <th style="width: 10%">사방넷코드</th>
+            <th style="width: 11%">제조사</th>
+            <th style="width: 11%">사방넷코드</th>
             <th style="width: 8%">공급상태</th>
             <th style="width: 12%">모델명</th>
-            <th style="width: 20%">상품명 (네이버쇼핑 연동)</th>
-            <th style="width: 9%">공급가</th>
-            <th style="width: 9%">온라인판매가</th>
-            <th style="width: 9%">폐쇄몰판매가</th>
+            <th style="width: 21%">상품명 (네이버쇼핑 자동연동)</th>
+            <th style="width: 8%">공급가</th>
+            <th style="width: 8%">온라인판매가</th>
+            <th style="width: 8%">폐쇄몰판매가</th>
           </tr>
         </thead>
         <tbody id="productTableBody">
@@ -151,23 +157,23 @@
 
   <div id="registerModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
-      <h3>📦 새상품 등록폼</h3>
+      <h3>📦 새 상품 등록 관리</h3>
       <form id="registerForm">
         <div class="form-grid">
           <div class="form-group">
             <label>브랜드 *</label>
-            <input type="text" id="regBrand" required placeholder="예:아이온">
+            <input type="text" id="regBrand" required placeholder="예: 아이온">
           </div>
           <div class="form-group">
-            <label>제조사</label>
-            <input type="text" id="regCompany" placeholder="예:자체제작">
+            <label>제조사(공급처)</label>
+            <input type="text" id="regCompany" placeholder="예: 자체제작">
           </div>
           <div class="form-group">
-            <label>사방넷코드</label>
-            <input type="text" id="regSabangCode" placeholder="사방넷코드입력">
+            <label>사방넷 상품코드</label>
+            <input type="text" id="regSabangCode" placeholder="코드번호 입력">
           </div>
           <div class="form-group">
-            <label>공급상태</label>
+            <label>현재 공급상태</label>
             <select id="regStatus">
               <option value="공급중">공급중</option>
               <option value="일시품절">일시품절</option>
@@ -176,128 +182,115 @@
           </div>
           <div class="form-group">
             <label>모델명</label>
-            <input type="text" id="regModelName" placeholder="모델명 입력">
+            <input type="text" id="regModelName" placeholder="모델코드명 입력">
           </div>
           <div class="form-group">
-            <label>공급가(원)</label>
+            <label>원가 / 공급가 (원)</label>
             <input type="number" id="regCostPrice" value="0" min="0">
           </div>
           <div class="form-group">
-            <label>온라인판매가(원)</label>
+            <label>온라인 최저가 (원)</label>
             <input type="number" id="regSellPrice" value="0" min="0">
           </div>
           <div class="form-group">
-            <label>폐쇄몰판매가(원)</label>
+            <label>폐쇄몰 판매가 (원)</label>
             <input type="number" id="regClosedPrice" value="0" min="0">
           </div>
           <div class="form-group full-width">
-            <label>상품명*</label>
-            <input type="text" id="regProductName" required placeholder="리스트에 노출될 전체 상품명">
+            <label>전체 상품명 *</label>
+            <input type="text" id="regProductName" required placeholder="스토어 노출용 풀네임 상품명">
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="closeRegModalBtn">❌ 취소</button>
-          <button type="submit" class="btn btn-primary">💾 저장하기</button>
+          <button type="button" class="btn btn-secondary" id="closeRegModalBtn">❌ 입력 취소</button>
+          <button type="submit" class="btn btn-primary">💾 시트 저장하기</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // 🌟 구글 앱스 스크립트 웹앱 주소 세팅 (발급받으신 최신 주소로 교체하세요!)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzf6ODYXecowtGBGJOEalbocYOHXDhRFyiah6IzGHSzAJSeXpONBU5qMn4PHFo1GBBBRg/exec";
-    const MASTER_PW = "2369"; // 설정할 마스터 비밀번호
+    // 🌟 1단계에서 새로 배포 후 발급받은 '최신 구글 주소'를 꼭 여기에 교체해 넣으세요!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9TZyH_YzZLnUUGH2GHh5sKxgHOHGEBgor0P01kbuZQN64FvJaoeeHyPArysX4nx8r/exec";
+    const MASTER_PW = "2369"; // 로그인에 사용할 비밀번호 지정
 
-    let allProducts = []; // 서버에서 불러온 데이터 캐시 저장소
+    let cachedProducts = []; 
 
     // ==========================================
-    // 🔒 1. 로그인 제어 영역 (엔터 / 클릭 이벤트 분리 최적화)
+    // 🔒 [기능 1] 로그인 제어 및 타이핑 렉 해결
     // ==========================================
     const passwordInput = document.getElementById('passwordInput');
     const loginButton = document.getElementById('loginButton');
 
-    // 엔터키 입력 감지
     passwordInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        handleLogin();
-      }
+      if (e.key === 'Enter') { processSystemLogin(); }
     });
+    loginButton.addEventListener('click', processSystemLogin);
 
-    // 접속 버튼 클릭 감지
-    loginButton.addEventListener('click', handleLogin);
-
-    function handleLogin() {
-      const inputVal = passwordInput.value;
-      if (inputVal === MASTER_PW) {
+    function processSystemLogin() {
+      const userPassword = passwordInput.value;
+      if (userPassword === MASTER_PW) {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
-        fetchDataFromServer(); // 메인 데이터 로딩
+        fetchDataFromServer(); 
       } else {
-        alert("비밀번호가 올바르지 않습니다.");
+        alert("접속 보안 비밀번호가 올바르지 않습니다.");
         passwordInput.value = "";
         passwordInput.focus();
       }
     }
 
     // ==========================================
-    // 🔍 2. 검색 제어 영역 (엔터 / 클릭 시에만 단발성 실행)
+    // 🔍 [기능 2] 검색 필터링 최적화 (단발성 실행)
     // ==========================================
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
 
-    // 엔터치면 검색
     searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        executeSearch();
-      }
+      if (e.key === 'Enter') { executeTargetSearch(); }
     });
+    searchButton.addEventListener('click', executeTargetSearch);
 
-    // 버튼 누르면 검색
-    searchButton.addEventListener('click', executeSearch);
+    function executeTargetSearch() {
+      const searchKeyword = searchInput.value.trim().toLowerCase();
+      
+      if (searchKeyword === "") {
+        renderMainTable(cachedProducts);
+        return;
+      }
 
-    function executeSearch() {
-      const query = searchInput.value.trim().toLowerCase();
-      const tableBody = document.getElementById('productTableBody');
-      tableBody.innerHTML = ""; // 기존 뷰 리셋
+      const filteredResult = cachedProducts.filter(item => {
+        return (item.brand || "").toLowerCase().includes(searchKeyword) ||
+               (item.company || "").toLowerCase().includes(searchKeyword) ||
+               (item.modelName || "").toLowerCase().includes(searchKeyword) ||
+               (item.productName || "").toLowerCase().includes(searchKeyword) ||
+               (item.sabangCode || "").toLowerCase().includes(searchKeyword);
+      });
 
-      // 검색어가 비어있으면 전체 노출, 있으면 필터링 연산 진행 (단 1번만 연산)
-      const filtered = query === "" 
-        ? allProducts 
-        : allProducts.filter(p => {
-            return p.brand.toLowerCase().includes(query) ||
-                   p.company.toLowerCase().includes(query) ||
-                   p.modelName.toLowerCase().includes(query) ||
-                   p.productName.toLowerCase().includes(query) ||
-                   p.sabangCode.toLowerCase().includes(query);
-          });
-
-      renderTable(filtered);
+      renderMainTable(filteredResult);
     }
 
     // ==========================================
-    // 📥 3. 개별 상품 등록 팝업 모달 제어 영역
+    // 📥 [기능 3] 팝업 모달 폼 핸들링 및 추가 최적화
     // ==========================================
     const registerModal = document.getElementById('registerModal');
     const openRegModalBtn = document.getElementById('openRegModalBtn');
     const closeRegModalBtn = document.getElementById('closeRegModalBtn');
     const registerForm = document.getElementById('registerForm');
 
-    // 팝업 열기
     openRegModalBtn.addEventListener('click', () => {
       registerForm.reset();
       registerModal.style.display = 'flex';
     });
 
-    // 팝업 닫기
     closeRegModalBtn.addEventListener('click', () => {
       registerModal.style.display = 'none';
     });
 
-    // 팝업 안에서 최종 [저장하기] 제출 처리
     registerForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // 기본 새로고침 방지
+      e.preventDefault(); 
 
-      const newProduct = {
+      const payload = {
         brand: document.getElementById('regBrand').value.trim(),
         company: document.getElementById('regCompany').value.trim(),
         sabangCode: document.getElementById('regSabangCode').value.trim(),
@@ -309,92 +302,89 @@
         closedPrice: Number(document.getElementById('regClosedPrice').value || 0)
       };
 
-      // 버튼 중복 클릭 방지 잠금
-      const submitBtn = registerForm.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.innerText = "⏳ 시트 저장 중...";
+      const saveBtn = registerForm.querySelector('button[type="submit"]');
+      saveBtn.disabled = true;
+      saveBtn.innerText = "⏳ 구글 시트 등록 중...";
 
-      // 구글 앱스 스크립트 서버로 데이터 전송
       fetch(SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "add", product: newProduct })
+        body: JSON.stringify({ action: "add", product: payload })
       })
-      .then(res => res.json())
+      .then(response => response.json())
       .then(resData => {
         if (resData.result === "success") {
-          alert("구글 시트에 상품이 안전하게 저장되었습니다!");
-          registerModal.style.display = 'none'; // 팝업 닫기
+          alert("구글 스프레드시트에 새로운 상품이 완벽하게 저장되었습니다.");
+          registerModal.style.display = 'none'; 
           
-          // 낙관적 업데이트: 전체 새로고침 없이 화면에 한 줄 즉시 붙이기
-          newProduct.id = resData.id; // 구글 내부의 행 번호 바인딩
-          allProducts.push(newProduct);
-          appendRow(newProduct);
+          payload.id = resData.id; 
+          cachedProducts.push(payload);
+          appendRowIntoGrid(payload);
         } else {
-          alert("서버 저장 실패: " + resData.message);
+          alert("구글 시트 저장 처리 실패: " + resData.message);
         }
       })
-      .catch(err => alert("네트워크 통신 오류가 발생했습니다: " + err))
+      .catch(error => alert("네트워크 통신 오류가 발생했습니다: " + error))
       .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "💾 저장하기";
+        saveBtn.disabled = false;
+        saveBtn.innerText = "💾 시트 저장하기";
       });
     });
 
     // ==========================================
-    // 📊 4. 코어 데이터 로딩 및 렌더링 영역
+    // 📊 [기능 4] 백엔드 수신 및 렌더링
     // ==========================================
     document.getElementById('refreshBtn').addEventListener('click', fetchDataFromServer);
 
     function fetchDataFromServer() {
-      const tableBody = document.getElementById('productTableBody');
-      tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; font-weight:bold; color:var(--primary-color);">구글 스프레드시트 데이터 불러오는 중...</td></tr>`;
+      const tbody = document.getElementById('productTableBody');
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:40px; font-weight:bold; color:var(--primary-color);">구글 클라우드에서 최신 데이터를 연동하여 불러오는 중입니다...</td></tr>`;
       
       fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
           if (data.result === "success") {
-            allProducts = data.products || [];
-            renderTable(allProducts);
+            cachedProducts = data.products || [];
+            renderMainTable(cachedProducts);
           } else {
-            tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red; padding:20px;">데이터 로드 실패: ${data.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px; font-weight:bold;">데이터 파싱 에러: ${data.message}</td></tr>`;
           }
         })
         .catch(err => {
-          tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red; padding:20px;">CORS 연결 차단 혹은 오프라인 상태입니다. 배포를 확인하세요.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px; font-weight:bold;">서버 통신 실패: 구글 앱스 스크립트 배포 주소를 체크하세요.</td></tr>`;
         });
     }
 
-    function renderTable(products) {
-      const tableBody = document.getElementById('productTableBody');
-      tableBody.innerHTML = "";
-      if (products.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);">표시할 상품 데이터가 존재하지 않습니다.</td></tr>`;
+    function renderMainTable(productsArray) {
+      const tbody = document.getElementById('productTableBody');
+      tbody.innerHTML = "";
+      if (productsArray.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">조건에 부합하는 일치 상품 정보가 없습니다.</td></tr>`;
         return;
       }
-      products.forEach(p => appendRow(p));
+      productsArray.forEach(item => appendRowIntoGrid(item));
     }
 
-    function appendRow(p) {
-      const tableBody = document.getElementById('productTableBody');
-      const tr = document.createElement('tr');
+    function appendRowIntoGrid(item) {
+      const tbody = document.getElementById('productTableBody');
+      const rowTr = document.createElement('tr');
       
-      // 네이버 쇼핑 다이렉트 검색 주소 가공
-      const naverShoppingUrl = `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(p.productName)}`;
+      const targetShoppingUrl = `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(item.productName)}`;
+      const statusColor = item.status === '공급중' ? '#16a34a' : '#dc2626';
 
-      tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.brand}</td>
-        <td>${p.company}</td>
-        <td>${p.sabangCode}</td>
-        <td><span style="font-weight:bold; color:${p.status === '공급중' ? '#16a34a' : '#dc2626'}">${p.status}</span></td>
-        <td>${p.modelName}</td>
-        <td><div class="prod-name" onclick="window.open('${naverShoppingUrl}', '_blank')">${p.productName}</div></td>
-        <td>${Number(p.costPrice).toLocaleString()}원</td>
-        <td style="font-weight:bold; color:var(--primary-color);">${Number(p.sellPrice).toLocaleString()}원</td>
-        <td style="color:#7c3aed;">${Number(p.closedPrice).toLocaleString()}원</td>
+      rowTr.innerHTML = `
+        <td>${item.id}</td>
+        <td><strong>${item.brand || ''}</strong></td>
+        <td>${item.company || ''}</td>
+        <td>${item.sabangCode || ''}</td>
+        <td><span style="font-weight:bold; color:${statusColor}">${item.status || '공급중'}</span></td>
+        <td>${item.modelName || ''}</td>
+        <td><div class="prod-name" onclick="window.open('${targetShoppingUrl}', '_blank')" title="클릭 시 네이버쇼핑 자동 검색">${item.productName || ''}</div></td>
+        <td style="color:#4b5563;">${Number(item.costPrice || 0).toLocaleString()}원</td>
+        <td style="font-weight:bold; color:var(--primary-color);">${Number(item.sellPrice || 0).toLocaleString()}원</td>
+        <td style="font-weight:bold; color:#7c3aed;">${Number(item.closedPrice || 0).toLocaleString()}원</td>
       `;
-      tableBody.appendChild(tr);
+      tbody.appendChild(rowTr);
     }
   </script>
 </body>
