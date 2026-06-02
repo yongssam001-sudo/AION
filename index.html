@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아이온 상품 관리 시스템 v5</title>
+    <title>아이온 상품 관리 시스템 v6</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -18,7 +18,7 @@
             --success-color: #2ecc71;
             --error-color: #e74c3c;
             --warning-color: #f1c40f;
-            --sidebar-width: 250px;
+            --sidebar-width: 260px;
         }
 
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; display: flex; color: var(--text-color); background-color: var(--bg-color); height: 100vh; overflow: hidden; }
@@ -29,14 +29,16 @@
         .auth-input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; text-align: center; margin-bottom: 15px; outline: none; }
         .auth-btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
 
-        /* 사이드바 (완전 고정) */
-        .sidebar { width: var(--sidebar-width); background-color: var(--sidebar-bg); color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 25px 20px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 100; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+        /* 사이드바 (업체 메모 버튼 부활) */
+        .sidebar { width: var(--sidebar-width); background-color: var(--sidebar-bg); color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 25px 15px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 100; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
         .sidebar-top { overflow-y: auto; flex-grow: 1; margin-bottom: 20px; }
         .sidebar h3 { margin-top: 0; padding-bottom: 15px; border-bottom: 1px solid #57606f; font-size: 16px; color: #a4b0be; letter-spacing: 1px; }
         .company-list { list-style: none; padding: 0; margin: 20px 0; }
-        .company-item { padding: 12px 15px; margin-bottom: 8px; background-color: #3f4656; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .company-item { padding: 10px 12px; margin-bottom: 8px; background-color: #3f4656; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
         .company-item:hover { background-color: #4b556a; }
         .company-item.active { background-color: var(--primary-color); font-weight: bold; }
+        .btn-company-note { background: #57606f; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .btn-company-note:hover { background: var(--warning-color); color: #333; }
         
         .sidebar-footer { border-top: 1px solid #57606f; padding-top: 20px; display: flex; flex-direction: column; gap: 10px; }
         .btn-sidebar { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: all 0.2s; }
@@ -44,30 +46,29 @@
         .btn-excel-dn { background-color: #f39c12; color: white; }
         .btn-excel-up { background-color: #9b59b6; color: white; }
 
-        /* 메인 컨텐츠 (고정 사이드바 대응) */
+        /* 메인 컨텐츠 */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; background-color: var(--bg-color); min-width: 1000px; }
         .content-header { padding: 25px 35px 15px 35px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header-top h2 { margin: 0; font-size: 24px; font-weight: 800; color: var(--secondary-color); }
         
-        /* 검색창 개선 (고도화) */
+        /* 검색창 (검색 로직 수정 반영) */
         .search-area { display: flex; align-items: center; gap: 10px; }
         .search-container { display: flex; align-items: center; background-color: #f1f3f5; padding: 5px 5px 5px 15px; border-radius: 30px; border: 1px solid #dee2e6; width: 350px; transition: all 0.3s; }
         .search-container:focus-within { background-color: white; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.1); }
         .search-input { border: none; background: transparent; outline: none; font-size: 14px; flex-grow: 1; padding: 8px 0; }
         .btn-search { background-color: var(--primary-color); color: white; border: none; border-radius: 25px; padding: 8px 20px; font-size: 13px; font-weight: bold; cursor: pointer; }
 
-        /* 필터 버튼 디자인 변경 */
+        /* 필터 버튼 */
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
         .filter-group { display: flex; gap: 10px; }
         .filter-tab { padding: 10px 22px; border-radius: 30px; border: 1px solid #e0e0e0; background: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: #7f8c8d; }
-        .filter-tab:hover { background: #f8f9fa; }
-        .filter-tab.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .filter-tab.active { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
         .filter-tab[data-status="공급중"].active { background: var(--success-color); border-color: var(--success-color); }
         .filter-tab[data-status="품절"].active { background: #e67e22; border-color: #e67e22; }
         .filter-tab[data-status="단종"].active { background: var(--error-color); border-color: var(--error-color); }
 
-        /* 테이블 영역 (비고창 제거, 상품명 확대) */
+        /* 테이블 (상품명 공간 최대 확보) */
         .table-wrapper { flex-grow: 1; padding: 20px 35px; overflow-y: auto; }
         .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -75,7 +76,6 @@
         td { padding: 14px 10px; border-bottom: 1px solid #f1f2f6; font-size: 13px; text-align: center; }
         tr:hover { background-color: #f9fbff; }
         
-        /* 상품명 가독성 극대화 (비고창 삭제 후 공간 확보) */
         .name-cell { 
             text-align: left; 
             padding-left: 20px;
@@ -92,68 +92,59 @@
             font-weight: 500;
         }
         .model-cell { font-weight: 700; color: #34495e; }
-        .price-cell { text-align: right; font-family: 'Consolas', monospace; font-weight: 600; color: #2c3e50; }
+        .price-cell { text-align: right; font-family: 'Consolas', monospace; font-weight: 600; }
         .margin-cell { font-weight: 800; color: var(--primary-color); text-align: right; background-color: #f0f7ff; border-radius: 6px; }
         
-        /* 상태 셀렉트 */
-        .status-badge { padding: 6px 12px; border-radius: 6px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .status-badge { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 800; }
         .status-공급중 { color: #27ae60; background-color: #eafaf1; }
         .status-품절 { color: #d35400; background-color: #fef5e7; }
         .status-단종 { color: #c0392b; background-color: #fdedec; }
 
-        /* 관리 칸 (비고 아이콘화) */
         .manage-area { display: flex; justify-content: center; align-items: center; gap: 12px; }
         .note-icon { font-size: 20px; cursor: pointer; transition: all 0.2s; opacity: 0.3; filter: grayscale(1); border: none; background: none; padding: 0; }
         .note-icon.active { opacity: 1; filter: none; }
-        .note-icon:hover { transform: scale(1.2); }
         .del-icon { font-size: 18px; cursor: pointer; color: #bdc3c7; border: none; background: none; padding: 0; transition: all 0.2s; }
         .del-icon:hover { color: var(--error-color); transform: scale(1.2); }
 
-        /* 모달 스타일 */
+        /* 모달 */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
-        .modal-content { background-color: white; margin: 5% auto; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; overflow: hidden; width: 650px; }
-        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
+        .modal-content { background-color: white; margin: 5% auto; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden; width: 650px; }
         .modal-header { padding: 25px 35px; background-color: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h3 { margin: 0; font-size: 20px; font-weight: 800; }
         .modal-body { padding: 35px; }
         .modal-footer { padding: 20px 35px; background-color: #f8f9fa; border-top: 1px solid #eee; text-align: right; display: flex; gap: 15px; justify-content: flex-end; }
 
-        /* 등록 폼 (드롭다운 적용) */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-item { display: flex; flex-direction: column; gap: 8px; }
         .form-item.full { grid-column: span 2; }
         .form-item label { font-size: 13px; font-weight: 700; color: #57606f; }
         .form-item input, .form-item select { padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
-        .form-item input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1); }
         
         .btn-confirm { background-color: var(--primary-color); color: white; padding: 12px 30px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-close { background-color: #bdc3c7; color: white; padding: 12px 25px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
-        /* 마진 분석 사이드 패널 */
+        /* 마진 분석 패널 */
         .side-panel { display: none; position: fixed; right: 0; top: 0; width: 450px; height: 100vh; background: white; z-index: 1001; box-shadow: -10px 0 30px rgba(0,0,0,0.15); padding: 40px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<!-- 인증 화면 -->
 <div id="authOverlay">
     <div class="auth-box">
-        <div style="font-size: 50px; margin-bottom: 20px;">🔒</div>
-        <h3 style="margin-bottom: 10px;">시스템 보안 인증</h3>
-        <p style="font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">접속을 위해 관리자 암호를 입력하세요.</p>
+        <div style="font-size: 50px; margin-bottom: 20px;">🔐</div>
+        <h3 style="margin-bottom: 10px;">아이온 통합관리 인증</h3>
+        <p style="font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">관리자 암호를 입력하세요.</p>
         <input type="password" id="sysPasswordInput" class="auth-input" placeholder="비밀번호 입력" onkeyup="if(event.key==='Enter') verifySystemPassword()">
         <button class="auth-btn" onclick="verifySystemPassword()">인증 및 접속</button>
         <div id="authErrorMsg" style="margin-top: 15px; color: var(--error-color); font-size: 13px;"></div>
     </div>
 </div>
 
-<!-- 사이드바 (고정) -->
 <div class="sidebar">
     <div class="sidebar-top">
         <h3>PARTNERS</h3>
         <ul class="company-list" id="companyList">
-            <li class="company-item active" onclick="selectCompany('all', this)">전체 업체 보기</li>
+            <li class="company-item active" onclick="selectCompany('all', this)"><span>전체 업체 보기</span></li>
         </ul>
     </div>
     <div class="sidebar-footer">
@@ -165,7 +156,6 @@
     </div>
 </div>
 
-<!-- 메인 컨텐츠 -->
 <div class="main-content">
     <div class="content-header">
         <div class="header-top">
@@ -173,7 +163,7 @@
             <div class="search-area">
                 <div id="syncStatus" style="font-size: 12px; color: #27ae60; font-weight: bold; margin-right: 15px;">● Connected</div>
                 <div class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="상품명, 모델명 일부만 입력해도 검색..." onkeyup="if(event.key==='Enter') executeSearch()">
+                    <input type="text" id="searchInput" class="search-input" placeholder="상품명, 모델명, 브랜드 검색..." onkeyup="if(event.key==='Enter') executeSearch()">
                     <button class="btn-search" onclick="executeSearch()">검색</button>
                 </div>
                 <button class="btn-sidebar" style="background-color: var(--secondary-color); color: white; width: auto; padding: 10px 20px; border-radius: 30px;" onclick="openCalcPanel()">📊 마진 분석</button>
@@ -205,7 +195,7 @@
                         <th>코드</th>
                         <th>상태</th>
                         <th>모델명</th>
-                        <th>상품명 (비고 제외 확장됨)</th>
+                        <th>상품명 (공간 확보됨)</th>
                         <th>공급가</th>
                         <th>온라인가</th>
                         <th>마진</th>
@@ -221,7 +211,43 @@
     </div>
 </div>
 
-<!-- 상품 등록 모달 (드롭다운 적용) -->
+<!-- 업체 메모 모달 (별도 시트 저장) -->
+<div id="companyNoteModal" class="modal">
+    <div class="modal-content" style="width: 500px;">
+        <div class="modal-header"><h3 id="compNoteTitle">업체 특이사항</h3></div>
+        <div class="modal-body">
+            <div id="compNoteDisplay" style="background:#f8f9fa; padding:20px; border-radius:12px; margin-bottom:20px; font-size:14px; min-height:80px; line-height:1.6; white-space: pre-wrap;"></div>
+            <div class="form-item">
+                <label>메모 수정/추가</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="compNoteInput" style="flex-grow:1;" placeholder="내용 입력...">
+                    <button class="btn-confirm" onclick="saveCompanyNote()">저장</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn-close" onclick="document.getElementById('companyNoteModal').style.display='none'">닫기</button></div>
+    </div>
+</div>
+
+<!-- 제품 메모 모달 (시트1 저장) -->
+<div id="productNoteModal" class="modal">
+    <div class="modal-content" style="width: 500px;">
+        <div class="modal-header"><h3 id="prodNoteTitle">제품 개별 메모</h3></div>
+        <div class="modal-body">
+            <div id="prodNoteDisplay" style="background:#f8f9fa; padding:20px; border-radius:12px; margin-bottom:20px; font-size:14px; min-height:60px; line-height:1.6;"></div>
+            <div class="form-item">
+                <label>메모 수정</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="prodNoteInput" style="flex-grow:1;" placeholder="내용 입력...">
+                    <button class="btn-confirm" id="btnSaveProdNote">저장</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn-close" onclick="document.getElementById('productNoteModal').style.display='none'">닫기</button></div>
+    </div>
+</div>
+
+<!-- 상품 등록 모달 -->
 <div id="addProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h3>✨ 신규 상품 등록</h3></div>
@@ -250,31 +276,13 @@
                 <div class="form-item"><label>온라인 판매가</label><input type="number" id="new_sellPrice" value="0"></div>
                 <div class="form-item"><label>폐쇄몰 판매가</label><input type="number" id="new_closedPrice" value="0"></div>
                 <div class="form-item"><label>소비자가</label><input type="number" id="new_consumerPrice" value="0"></div>
-                <div class="form-item full"><label>메모 / 비고 (관리 아이콘에 저장됨)</label><input type="text" id="new_note" placeholder="중요 사항 입력"></div>
+                <div class="form-item full"><label>제품 메모 (시트1 우측에 저장)</label><input type="text" id="new_note" placeholder="메모 입력"></div>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn-close" onclick="closeAddProductModal()">취소</button>
             <button class="btn-confirm" onclick="submitNewProduct()">등록 완료</button>
         </div>
-    </div>
-</div>
-
-<!-- 메모 관리 모달 -->
-<div id="noteModal" class="modal">
-    <div class="modal-content" style="width: 500px;">
-        <div class="modal-header"><h3 id="noteModalTitle">상품 메모 관리</h3></div>
-        <div class="modal-body">
-            <div id="noteContentDisplay" style="background:#f8f9fa; padding:20px; border-radius:12px; margin-bottom:20px; font-size:14px; min-height:60px; line-height:1.6;"></div>
-            <div class="form-item">
-                <label>메모 수정</label>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="editNoteInput" style="flex-grow:1;" placeholder="내용 입력...">
-                    <button class="btn-confirm" id="btnSaveNote" style="padding:10px 20px;">저장</button>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer"><button class="btn-close" onclick="closeNoteModal()">닫기</button></div>
     </div>
 </div>
 
@@ -301,19 +309,18 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5_x31yIy1zScL97l5sSBX1Viw2WLH830fFQ8Qx--HI0tt0neyYjGE5OJvXvteIJIE/exec";
-    let products=[], companies=[], brands=[], currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveNoteId='';
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx0sTMwBAnEOZ6xvyF7JaXWaI86-m9rhxk-oXmiy7V8gs_DTAAP0_Q-4UuxRSsPg7UJ/exec";
+    let products=[], companies=[], brands=[], companyNotes={}, currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveProdId='', ActiveCompName='';
 
     window.onload = function() {
-        if(sessionStorage.getItem("aion_auth_v5")==="true") document.getElementById("authOverlay").style.display="none";
+        if(sessionStorage.getItem("aion_auth_v6")==="true") document.getElementById("authOverlay").style.display="none";
         fetchDataFromSheets();
     };
 
     function verifySystemPassword() {
         const input = document.getElementById("sysPasswordInput").value;
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
-            const pw = data.serverPassword || "2369";
-            if(input === String(pw)){ sessionStorage.setItem("aion_auth_v5","true"); document.getElementById("authOverlay").style.display="none"; }
+            if(input === String(data.serverPassword || "2369")){ sessionStorage.setItem("aion_auth_v6","true"); document.getElementById("authOverlay").style.display="none"; }
             else { document.getElementById("authErrorMsg").innerText = "비밀번호가 틀렸습니다."; }
         });
     }
@@ -322,6 +329,7 @@
         if(manual) document.getElementById('syncStatus').innerText = "● Syncing...";
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
             products = data.products || [];
+            companyNotes = data.companyNotes || {};
             companies = [...new Set(products.map(p=>p.company).filter(c=>c&&c!=='-'))].sort();
             brands = [...new Set(products.map(p=>p.brand).filter(b=>b&&b!=='-'))].sort();
             renderSidebar(); updateDatalists(); renderTable();
@@ -331,11 +339,12 @@
 
     function renderSidebar(){
         const list = document.getElementById('companyList');
-        list.innerHTML = `<li class="company-item ${currentSelectedCompany==='all'?'active':''}" onclick="selectCompany('all', this)">전체 업체 보기</li>`;
+        list.innerHTML = `<li class="company-item ${currentSelectedCompany==='all'?'active':''}" onclick="selectCompany('all', this)"><span>전체 업체 보기</span></li>`;
         companies.forEach(c=>{
             const li = document.createElement('li');
             li.className = `company-item ${currentSelectedCompany===c?'active':''}`;
-            li.innerText = c; li.onclick = () => selectCompany(c, li);
+            li.innerHTML = `<span style="flex-grow:1; text-align:left;">${c}</span><button class="btn-company-note" onclick="event.stopPropagation(); openCompanyNoteModal('${c}')">메모</button>`;
+            li.onclick = () => selectCompany(c, li);
             list.appendChild(li);
         });
     }
@@ -351,14 +360,14 @@
         if(currentSelectedCompany !== 'all') filtered = filtered.filter(p=>p.company === currentSelectedCompany);
         if(currentSelectedStatus !== 'all') filtered = filtered.filter(p=>p.status === currentSelectedStatus);
         
-        // 부분 검색 로직 고도화 (상품명, 모델명 일부 포함 시 검색)
+        // 검색 로직 수정: keyword가 포함된 모든 항목 검색
         if(currentSearchKeyword){
             const k = currentSearchKeyword.toLowerCase();
             filtered = filtered.filter(p=> 
-                (p.productName||'').toLowerCase().includes(k) || 
-                (p.modelName||'').toLowerCase().includes(k) || 
-                (p.brand||'').toLowerCase().includes(k) ||
-                (p.company||'').toLowerCase().includes(k)
+                (p.productName||'').toLowerCase().indexOf(k) !== -1 || 
+                (p.modelName||'').toLowerCase().indexOf(k) !== -1 || 
+                (p.brand||'').toLowerCase().indexOf(k) !== -1 ||
+                (p.company||'').toLowerCase().indexOf(k) !== -1
             );
         }
 
@@ -385,7 +394,7 @@
                 <td class="margin-cell" style="background:#fff5eb; color:#d35400;">${m2}%</td>
                 <td><a href="${p.productLink!=='-'?p.productLink:naverUrl}" target="_blank" style="text-decoration:none; font-size:18px;">🛒</a></td>
                 <td class="manage-area">
-                    <button class="note-icon ${hasNote?'active':''}" onclick="openNoteModal('${p.id}')">📝</button>
+                    <button class="note-icon ${hasNote?'active':''}" onclick="openProductNoteModal('${p.id}')">📝</button>
                     <button class="del-icon" onclick="deleteProduct('${p.id}')">✕</button>
                 </td>
             `;
@@ -417,18 +426,32 @@
         fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"add", product:p})}).then(()=> { closeAddProductModal(); fetchDataFromSheets(true); });
     }
 
-    function openNoteModal(id){
-        ActiveNoteId = id;
+    // 업체 메모 모달 (별도 시트)
+    function openCompanyNoteModal(name){
+        ActiveCompName = name;
+        document.getElementById('compNoteTitle').innerText = `🏢 [${name}] 업체 메모`;
+        document.getElementById('compNoteDisplay').innerText = companyNotes[name] || "등록된 업체 메모가 없습니다.";
+        document.getElementById('compNoteInput').value = companyNotes[name] || "";
+        document.getElementById('companyNoteModal').style.display = 'block';
+    }
+    function saveCompanyNote(){
+        const val = document.getElementById('compNoteInput').value.trim();
+        fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"updateCompanyNote", company:ActiveCompName, note:val})}).then(()=>{ document.getElementById('companyNoteModal').style.display='none'; fetchDataFromSheets(true); });
+    }
+
+    // 제품 메모 모달 (시트1)
+    function openProductNoteModal(id){
+        ActiveProdId = id;
         const p = products.find(item=>String(item.id)===String(id));
-        document.getElementById('noteContentDisplay').innerText = (p.note && p.note !== '-') ? p.note : "등록된 메모가 없습니다.";
-        document.getElementById('editNoteInput').value = (p.note && p.note !== '-') ? p.note : "";
-        document.getElementById('noteModal').style.display = 'block';
-        document.getElementById('btnSaveNote').onclick = () => {
-            const val = document.getElementById('editNoteInput').value.trim() || '-';
-            fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"update", id:id, field:"note", value:val})}).then(()=>{ closeNoteModal(); fetchDataFromSheets(true); });
+        document.getElementById('prodNoteTitle').innerText = `📝 [${p.modelName}] 제품 메모`;
+        document.getElementById('prodNoteDisplay').innerText = (p.note && p.note !== '-') ? p.note : "등록된 제품 메모가 없습니다.";
+        document.getElementById('prodNoteInput').value = (p.note && p.note !== '-') ? p.note : "";
+        document.getElementById('productNoteModal').style.display = 'block';
+        document.getElementById('btnSaveProdNote').onclick = () => {
+            const val = document.getElementById('prodNoteInput').value.trim() || '-';
+            fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"update", id:id, field:"note", value:val})}).then(()=>{ document.getElementById('productNoteModal').style.display='none'; fetchDataFromSheets(true); });
         };
     }
-    function closeNoteModal(){ document.getElementById('noteModal').style.display='none'; }
 
     function deleteProduct(id){ if(confirm("삭제하시겠습니까?")) fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"delete", id:id})}).then(()=>fetchDataFromSheets(true)); }
     function toggleSelectAll(m){ document.querySelectorAll('.row-checkbox').forEach(c=>c.checked=m.checked); }
