@@ -214,7 +214,7 @@
             <h2>📊 MD 마진 분석기</h2>
             <div class="calc-input-box">
                 <div class="calc-input-row">
-                    <div class="calc-input-group"><label>공급가 (VAT 포함)</label><input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
+                    <div class="calc-input-group"><label>공급가 (VAT포함)</label><input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
                     <div class="calc-input-group"><label>택배비</label><input type="number" id="deliveryFee" placeholder="숫자입력" value="0" onkeyup="checkCalcEnter(event)"></div>
                 </div>
                 <div class="calc-input-group"><label>예상 판매가 (VAT 포함)</label><input type="number" id="sellingPrice" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
@@ -222,7 +222,7 @@
             </div>
             <div id="calcResultSection" style="display:none;">
                 <div class="info-summary">
-                    <span>공급가: <b id="sumCost">0</b>원</span><span>택배비: <b id="sumDelivery">0</b>원</span><span>공급가액(원가): <b id="sumCostNet">0</b>원</span><span>예상 판매가: <b id="sumSp">0</b>원</span><span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
+                    <span>공급가: <b id="sumCost">0</b>원</span><span>택배비: <b id="sumDelivery">0</b>원</span><span>공급가액(원가): <b id="sumCostNet">0</b>원</span><span>예상판매가: <b id="sumSp">0</b>원</span><span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
                 </div>
                 <table class="calc-table">
                     <thead><tr><th width="12%">수수료</th><th width="22%">정산예정금액</th><th width="22%">공급가액(공제)</th><th width="22%">최종 마진율</th><th width="22%">최종 마진금액</th></tr></thead>
@@ -243,7 +243,7 @@
 
 <script>
     // 💡여기에 본인의 최신 구글 웹앱 URL 주소를 넣어주세요.
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh7HaigVafOF-WfVGgAtxXFILFl5u4ciWXF1xOaQspYbSyEpHQxaCYPTF_b0bBwGdW/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwljmhmN0cX86KzJdq-llU7S70wzLeZT42h1AaqCw5Js6nbFUgBo9-Fs2TgpqxmRsyy/exec";
     let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', searchTimeout=null, cachedServerPassword="";
 
     window.onload = function() {
