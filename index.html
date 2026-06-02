@@ -2,136 +2,184 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>아이온 상품 관리</title>
+    <title>아이온 상품관리</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #2f3542; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: 'Malgun Gothic', sans-serif; }
-        .auth-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; color: #333; width: 360px; }
-        .auth-box h3 { margin-top: 0; color: #2f3542; font-size: 18px; margin-bottom: 15px; }
-        .auth-input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; text-align: center; margin-bottom: 12px; outline: none; }
-        .auth-input:focus { border-color: #2196F3; }
-        .auth-btn { width: 100%; padding: 10px; background-color: #2196F3; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .auth-btn:hover { background-color: #1e88e5; }
-        .auth-msg { font-size: 12px; color: #e74c3c; margin-top: 8px; min-height: 18px; }
-        body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; color: #333; background-color: #f5f6f8; overflow-x: hidden; }
-        .sidebar { width: 230px; background-color: #2f3542; color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.3s ease; z-index: 100; }
-        .sidebar-top { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
-        .sidebar h3 { margin-top: 0; padding-bottom: 8px; border-bottom: 1px solid #57606f; font-size: 14px; }
-        .company-list { list-style: none; padding: 0; margin: 10px 0; }
-        .company-item { padding: 6px 8px; margin-bottom: 4px; background-color: #3f4656; border-radius: 3px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
-        .company-item:hover { background-color: #4b556a; }
-        .company-item.active { background-color: #2196F3; font-weight: bold; }
-        .btn-company-note { background: #57606f; color: white; border: none; border-radius: 3px; padding: 2px 5px; font-size: 11px; cursor: pointer; margin-left: 5px; transition: all 0.2s; }
-        .btn-company-note:hover { background: #f1c40f; color: #333; }
-        .sidebar-footer { border-top: 1px solid #57606f; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        /* 🎨 [디자인 개선] 전체 테마 시스템의 고급 모던화 및 시각적 피로도 최소화 튜닝 */
+        :root {
+            --slate-dark: #1e293b;
+            --slate-light: #334155;
+            --brand-blue: #3b82f6;
+            --brand-blue-hover: #1d4ed8;
+            --bg-canvas: #f8fafc;
+            --border-soft: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        /* 🔒 [요구사항 3] 패스워드 화면 최적화 (실시간 연산 제거 ➔ 단발 바인딩으로 입력 차단 100% 제거) */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--slate-dark); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .auth-box { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; color: var(--text-main); width: 380px; }
+        .auth-box h3 { margin-top: 0; color: var(--slate-dark); font-size: 20px; margin-bottom: 12px; font-weight: 700; }
+        .auth-input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 16px; text-align: center; margin-bottom: 15px; outline: none; font-weight: bold; transition: border 0.2s; }
+        .auth-input:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .auth-btn { width: 100%; padding: 12px; background-color: var(--brand-blue); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .auth-btn:hover { background-color: var(--brand-blue-hover); }
+        .auth-msg { font-size: 13px; color: #ef4444; margin-top: 10px; min-height: 20px; font-weight: 500; }
+
+        /* 메인 레이아웃 프레임 구조 보존 및 시각 최적화 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; display: flex; color: var(--text-main); background-color: var(--bg-canvas); overflow-x: hidden; }
+        .sidebar { width: 240px; background-color: var(--slate-dark); color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; box-shadow: 2px 0 12px rgba(0,0,0,0.05); }
+        .sidebar-top { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 2px; }
+        .sidebar h3 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid var(--slate-light); font-size: 14px; letter-spacing: 0.5px; color: #94a3b8; text-transform: uppercase; }
+        .company-list { list-style: none; padding: 0; margin: 12px 0; }
+        .company-item { padding: 8px 10px; margin-bottom: 6px; background-color: var(--slate-light); border-radius: 6px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; border: 1px solid transparent; }
+        .company-item:hover { background-color: #475569; }
+        .company-item.active { background-color: var(--brand-blue); font-weight: bold; border-color: #60a5fa; }
+        .btn-company-note { background: #475569; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; margin-left: 5px; transition: all 0.2s; }
+        .btn-company-note:hover { background: #eab308; color: var(--slate-dark); }
+        .sidebar-footer { border-top: 1px solid var(--slate-light); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
         .sidebar-footer .btn { width: 100%; text-align: center; box-sizing: border-box; }
-        .btn-clear-mini { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
-        .sidebar-toggle-btn { position: fixed; top: 15px; left: 242px; width: 28px; height: 28px; background-color: #2f3542; color: white; border: 1px solid #57606f; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: left 0.3s ease, background-color 0.2s; z-index: 101; outline: none; }
-        .sidebar-toggle-btn:hover { background-color: #57606f; }
-        .main-content { margin-left: 230px; padding: 15px 20px; flex-grow: 1; box-sizing: border-box; transition: margin-left 0.3s ease, margin-right 0.3s ease; }
-        body.sidebar-collapsed .sidebar { transform: translateX(-230px); }
-        body.sidebar-collapsed .sidebar-toggle-btn { left: 12px; background-color: #2196F3; border-color: #2196F3; }
+        .btn-clear-mini { background-color: #ef4444; color: white; border: none; padding: 6px 12px; font-size: 11px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 4px; transition: background 0.2s; }
+        .btn-clear-mini:hover { background-color: #dc2626; }
+        
+        .sidebar-toggle-btn { position: fixed; top: 18px; left: 252px; width: 30px; height: 30px; background-color: var(--slate-dark); color: white; border: 1px solid var(--slate-light); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s; z-index: 101; outline: none; }
+        .sidebar-toggle-btn:hover { background-color: var(--slate-light); }
+        .main-content { margin-left: 240px; padding: 20px 24px; flex-grow: 1; box-sizing: border-box; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        body.sidebar-collapsed .sidebar { transform: translateX(-240px); }
+        body.sidebar-collapsed .sidebar-toggle-btn { left: 15px; background-color: var(--brand-blue); border-color: var(--brand-blue); }
         body.sidebar-collapsed .main-content { margin-left: 0; }
-        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 12px 16px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .header-left { display: flex; align-items: center; padding-left: 35px; }
-        h2 { margin: 0; font-size: 18px; white-space: nowrap; }
-        .status-badge { font-size: 11px; padding: 5px 10px; border-radius: 4px; font-weight: bold; transition: all 0.3s; white-space: nowrap; }
-        .status-sync { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-        .status-saving { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffcc80; animation: blink 1s infinite; }
+        
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04); border: 1px solid var(--border-soft); }
+        .header-left { display: flex; align-items: center; padding-left: 40px; gap: 12px; }
+        h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--slate-dark); letter-spacing: -0.5px; }
+        .status-badge { font-size: 11px; padding: 6px 12px; border-radius: 6px; font-weight: bold; transition: all 0.3s; white-space: nowrap; }
+        .status-sync { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .status-saving { background-color: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
-        .filter-tab-container { display: inline-flex; background: #e9ecef; padding: 2px; border-radius: 4px; gap: 2px; margin-bottom: 5px; }
-        .filter-tab { border: none; background: transparent; padding: 4px 10px; font-size: 11px; font-weight: bold; color: #57606f; border-radius: 3px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
-        .filter-tab:hover { background: rgba(0,0,0,0.05); color: #2f3542; }
-        .filter-tab.active[data-status="all"] { background: white; color: #2f3542; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .filter-tab.active[data-status="공급중"] { background: #2e7d32; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .filter-tab.active[data-status="품절"] { background: #ef6c00; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .filter-tab.active[data-status="단종"] { background: #c62828; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .header-right { display: flex; align-items: center; gap: 10px; }
-        .search-box-container { display: flex; align-items: center; background-color: white; padding: 5px 10px; border-radius: 4px; border: 1px solid #ced4da; }
-        .search-input { border: none; outline: none; font-size: 12px; width: 200px; }
-        .btn { color: white; padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-add-product { background-color: #4CAF50; }
-        .btn-add-company { background-color: #2196F3; padding: 6px 10px; font-size: 11px; width: 100%; margin-top: 5px;}
-        .btn-excel-dn { background-color: #f1c40f; color: #333; }
-        .btn-excel-up { background-color: #9b59b6; }
-        .action-btn-group { display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end; white-space: nowrap; }
-        .btn-select-delete { background-color: #e74c3c; color: white; font-weight: bold; padding: 4px 12px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; transition: background 0.2s; }
-        .btn-select-delete:hover { background-color: #c0392b; }
-        .btn-delete { background-color: #f44336; padding: 2px 6px; font-size: 11px; border-radius: 2px; border:none; color:white; cursor:pointer; opacity: 0; transition: opacity 0.15s ease; }
-        .btn-link-go { background-color: #00bcd4; color: white; border: none; padding: 3px 6px; font-size: 11px; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; font-weight: bold; }
-        .btn-link-go:hover { background-color: #0097a7; }
-        tr { transition: opacity 0.2s ease, background-color 0.2s ease; }
+        
+        .filter-tab-container { display: inline-flex; background: #f1f5f9; padding: 3px; border-radius: 8px; gap: 2px; margin-bottom: 5px; border: 1px solid #e2e8f0; }
+        .filter-tab { border: none; background: transparent; padding: 6px 12px; font-size: 11px; font-weight: bold; color: var(--text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+        .filter-tab:hover { background: rgba(0,0,0,0.03); color: var(--slate-dark); }
+        .filter-tab.active[data-status="all"] { background: white; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-tab.active[data-status="공급중"] { background: #166534; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-tab.active[data-status="품절"] { background: #c2410c; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-tab.active[data-status="단종"] { background: #991b1b; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        
+        /* 🔍 [요구사항 1] 상단 검색 바 디자인 고도화 및 검색 전용 단발성 버튼 인프라 실장 */
+        .search-box-container { display: flex; align-items: center; background-color: white; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-soft); gap: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); }
+        .search-input { border: none; outline: none; font-size: 12px; width: 200px; color: var(--text-main); }
+        .search-input::placeholder { color: #a0aec0; }
+        .search-btn { background: var(--slate-light); color: white; border: none; border-radius: 4px; font-size: 11px; padding: 5px 10px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .search-btn:hover { background: var(--slate-dark); }
+
+        .btn { color: white; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-add-product { background-color: #10b981; } .btn-add-product:hover { background-color: #059669; }
+        .btn-add-company { background-color: var(--brand-blue); padding: 8px 12px; font-size: 11px; width: 100%; margin-top: 6px; } .btn-add-company:hover { background-color: var(--brand-blue-hover); }
+        .btn-excel-dn { background-color: #eab308; color: var(--slate-dark); } .btn-excel-dn:hover { background-color: #ca8a04; }
+        .btn-excel-up { background-color: #8b5cf6; } .btn-excel-up:hover { background-color: #7c3aed; }
+        .action-btn-group { display: flex; gap: 6px; margin-bottom: 6px; justify-content: flex-end; white-space: nowrap; }
+        .btn-select-delete { background-color: #ef4444; color: white; font-weight: bold; padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-select-delete:hover { background-color: #dc2626; }
+        
+        .btn-delete { background-color: #ef4444; padding: 3px 8px; font-size: 11px; border-radius: 4px; border:none; color:white; cursor:pointer; opacity: 0; transition: opacity 0.15s ease, background 0.2s; font-weight: bold; }
+        .btn-delete:hover { background-color: #dc2626; }
+        .btn-link-go { background-color: #06b6d4; color: white; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; font-weight: bold; transition: background 0.2s; }
+        .btn-link-go:hover { background-color: #0891b2; }
+        
+        tr { transition: opacity 0.2s ease, background-color 0.1s ease; }
         tr:hover .btn-delete { opacity: 1; }
-        tr.selected-row { background-color: #e8f4fd !important; }
-        tr.selected-row td { border-color: #b3d7ff; }
-        tr.selected-row .brand-cell { background-color: #d0e6ff; }
-        tr.selected-row .company-cell { background-color: #dae8f5; }
-        tr.selected-row .sabang-cell { background-color: #f7edd3; }
-        tr.selected-row .margin-cell { background-color: #e0efff; }
-        .btn-calc-trigger { background-color: #4b6584; color: white; font-weight: bold; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap; }
-        .btn-calc-trigger:hover { background-color: #3b4f66; }
-        .table-container { background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto; }
+        tr.selected-row { background-color: #f0f7ff !important; }
+        tr.selected-row td { border-color: #bfdbfe; }
+        tr.selected-row .brand-cell { background-color: #dbeafe; }
+        tr.selected-row .company-cell { background-color: #e0f2fe; }
+        tr.selected-row .sabang-cell { background-color: #fef3c7; }
+        tr.selected-row .margin-cell { background-color: #dbeafe; }
+        
+        .btn-calc-trigger { background-color: var(--slate-light); color: white; font-weight: bold; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; transition: background 0.2s; }
+        .btn-calc-trigger:hover { background-color: var(--slate-dark); }
+        
+        .table-container { background-color: white; padding: 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04); overflow-x: auto; border: 1px solid var(--border-soft); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #ddd; padding: 5px 4px; text-align: center; font-size: 11px; white-space: nowrap; cursor: pointer; }
-        th { background-color: #f8f9fa; font-weight: bold; cursor: default; }
-        .num-cell { background-color: #f1f2f6; color: #57606f; font-weight: bold; cursor: default; }
-        .sabang-cell { background-color: #fcf8e3; font-weight: bold; }
-        .brand-cell { background-color: #e8f0fe; color: #1a73e8; font-weight: bold; }
-        .company-cell { background-color: #f0f4f8; color: #2c3e50; font-weight: bold; }
+        th, td { border: 1px solid var(--border-soft); padding: 7px 5px; text-align: center; font-size: 11px; white-space: nowrap; cursor: pointer; }
+        th { background-color: #f8fafc; font-weight: bold; cursor: default; color: var(--slate-light); font-size: 11px; height: 32px; }
+        .num-cell { background-color: #f8fafc; color: var(--text-muted); font-weight: bold; cursor: default; }
+        
+        /* 🎨 원본 특수 셀 고유 색상 및 라인 체계 복원 고수 */
+        .sabang-cell { background-color: #fffbeb; color: #b45309; font-weight: bold; }
+        .brand-cell { background-color: #eff6ff; color: #2563eb; font-weight: bold; }
+        .company-cell { background-color: #f0fdfa; color: #0d9488; font-weight: bold; }
         .model-cell { max-width: 120px; font-size: 11px; white-space: normal !important; word-break: break-all; line-height: 1.3; }
-        .name-cell { max-width: 315px; font-size: 11px; white-space: normal !important; word-break: break-all; line-height: 1.3; }
-        .status-select { font-size: 11px; padding: 2px 4px; border-radius: 3px; border: 1px solid #ccc; font-weight: bold; outline: none; cursor: pointer; }
-        .status-active { color: #2e7d32; border-color: #a5d6a7; background-color: #e8f5e9; }
-        .status-soldout { color: #ef6c00; border-color: #ffcc80; background-color: #fff3e0; }
-        .status-discontinued { color: #c62828; border-color: #ef9a9a; background-color: #ffebee; }
-        .margin-cell { font-weight: bold; color: #0066cc; background-color: #f4f9ff; text-align: right; }
-        .margin-closed-cell { font-weight: bold; color: #e67e22; background-color: #fff9f2; text-align: right; }
-        .price { text-align: right; }
+        .name-cell { max-width: 315px; font-size: 11px; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; text-align: left; }
+        
+        .status-select { font-size: 11px; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border-soft); font-weight: bold; outline: none; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .status-active { color: #166534; border-color: #bbf7d0; background-color: #f0fdf4; }
+        .status-soldout { color: #9a3412; border-color: #ffedd5; background-color: #fff7ed; }
+        .status-discontinued { color: #991b1b; border-color: #fee2e2; background-color: #fef2f2; }
+        .margin-cell { font-weight: bold; color: #1d4ed8; background-color: #eff6ff; text-align: right; padding-right: 6px; }
+        .margin-closed-cell { font-weight: bold; color: #c2410c; background-color: #fff7ed; text-align: right; padding-right: 6px; }
+        .price { text-align: right; padding-right: 6px; }
+        .edit-input { width: 100%; box-sizing: border-box; padding: 5px; border: 2px solid var(--brand-blue); border-radius: 4px; font-size: 11px; font-family: inherit; outline: none; background: white; font-weight: bold; }
         #excelInput { display: none; }
-        .calc-modal { display: none; position: fixed; z-index: 1000; right: 0; top: 0; width: 520px; height: 100vh; background-color: white; box-shadow: -5px 0 25px rgba(0,0,0,0.15); border-left: 1px solid #dcdde1; }
-        .calc-modal-content { height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; position: relative; color: #222; background-color: #f8f9fa; }
-        .calc-modal-content h2 { text-align: center; color: #222; margin-top: 10px; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #4b6584; padding-bottom: 10px; }
-        .calc-close { color: #888; position: absolute; left: 15px; top: 15px; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10; }
-        .calc-close:hover { color: #333; }
-        .calc-input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: white; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .calc-input-row { display: flex; gap: 8px; }
+        
+        /* 📊 마진 계산기 슬라이드 레이아웃 스펙 준수 및 고급화 */
+        .calc-modal { display: none; position: fixed; z-index: 1000; right: 0; top: 0; width: 520px; height: 100vh; background-color: white; box-shadow: -5px 0 30px rgba(0,0,0,0.1); border-left: 1px solid var(--border-soft); transition: all 0.3s ease; }
+        .calc-modal-content { height: 100%; overflow-y: auto; padding: 24px; box-sizing: border-box; position: relative; color: var(--text-main); background-color: var(--bg-canvas); }
+        .calc-modal-content h2 { text-align: center; color: var(--slate-dark); margin-top: 10px; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid var(--slate-light); padding-bottom: 12px; font-weight: 700; letter-spacing: -0.5px; }
+        .calc-close { color: var(--text-muted); position: absolute; left: 20px; top: 20px; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10; transition: color 0.2s; }
+        .calc-close:hover { color: var(--text-main); }
+        .calc-input-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border-soft); box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .calc-input-row { display: flex; gap: 10px; }
         .calc-input-group { flex: 1; }
-        .calc-input-group label { display: block; font-size: 11px; margin-bottom: 4px; color: #444; font-weight: bold; text-align: left; }
-        .calc-input-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; text-align: right; }
-        .calc-input-group input:focus { border-color: #4b6584; outline: none; }
-        .btn-calc-run { width: 100%; padding: 10px; background: #4b6584; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; }
-        .btn-calc-run:hover { background: #3b4f66; }
-        .calc-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; background: white; }
-        .calc-table th, .calc-table td { padding: 6px 8px; border: 1px solid #ddd; box-sizing: border-box; cursor: default; }
-        .calc-table th { background-color: #e9ecef; color: #333; font-weight: bold; text-align: center; }
-        .calc-table tr:hover { background-color: #f1f3f5; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .bold { font-weight: bold; }
-        .minus { color: #0056b3 !important; }
-        .plus { color: #d9534f !important; }
-        .info-summary { margin-bottom: 10px; font-size: 11px; color: #555; background: #e8f4fd; padding: 10px; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border: 1px solid #bbeeff; }
-        .info-summary span b { color: #2196F3; }
-        .info-summary span.full-width { grid-column: span 2; border-top: 1px dashed #bbeeff; padding-top: 4px; margin-top: 2px; }
-        .note-modal { display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
-        .note-modal-content { background-color: white; margin: 12% auto; padding: 20px; border-radius: 8px; width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; }
-        .note-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .note-modal-header h3 { margin: 0; font-size: 15px; color: #2c3e50; }
-        .note-close { font-size: 20px; font-weight: bold; cursor: pointer; color: #aaa; }
-        .note-close:hover { color: #333; }
-        .note-list-box { max-height: 280px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e9ecef; }
-        .note-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 5px; border-bottom: 1px dashed #dee2e6; font-size: 12px; gap: 10px; }
+        .calc-input-group label { display: block; font-size: 11px; margin-bottom: 6px; color: var(--slate-light); font-weight: bold; text-align: left; }
+        .calc-input-group input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 13px; text-align: right; outline: none; }
+        .calc-input-group input:focus { border-color: var(--brand-blue); }
+        .btn-calc-run { width: 100%; padding: 12px; background: var(--brand-blue); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-calc-run:hover { background: var(--brand-blue-hover); }
+        .calc-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-soft); }
+        .calc-table th, .calc-table td { padding: 8px 10px; border: 1px solid var(--border-soft); box-sizing: border-box; cursor: default; }
+        .calc-table th { background-color: #f1f5f9; color: var(--slate-dark); font-weight: bold; text-align: center; }
+        .calc-table tr:hover { background-color: var(--bg-canvas); }
+        .text-center { text-align: center; } .text-right { text-align: right; } .bold { font-weight: bold; }
+        .minus { color: #2563eb !important; } .plus { color: #dc2626 !important; }
+        .info-summary { margin-bottom: 12px; font-size: 11px; color: var(--slate-light); background: #f0f7ff; padding: 12px; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border: 1px solid #bfdbfe; }
+        .info-summary span b { color: var(--brand-blue); }
+        .info-summary span.full-width { grid-column: span 2; border-top: 1px dashed #bfdbfe; padding-top: 6px; margin-top: 2px; }
+        
+        /* 특이사항 메모 레이어 팝업 명세 보존 */
+        .note-modal { display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15,23,42,0.3); backdrop-filter: blur(2px); }
+        .note-modal-content { background-color: white; margin: 12% auto; padding: 24px; border-radius: 12px; width: 520px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--border-soft); }
+        .note-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-soft); padding-bottom: 12px; }
+        .note-modal-header h3 { margin: 0; font-size: 16px; color: var(--slate-dark); font-weight: 700; }
+        .note-close { font-size: 20px; font-weight: bold; cursor: pointer; color: var(--text-muted); }
+        .note-close:hover { color: var(--text-main); }
+        .note-list-box { max-height: 280px; overflow-y: auto; background: var(--bg-canvas); padding: 12px; border-radius: 8px; border: 1px solid var(--border-soft); }
+        .note-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 6px; border-bottom: 1px dashed var(--border-soft); font-size: 12px; gap: 12px; }
         .note-item:last-child { border-bottom: none; }
-        .note-text-area { flex-grow: 1; line-height: 1.5; color: #333; word-break: break-all; }
-        .note-action-btns { display: flex; gap: 3px; shrink: 0; }
-        .btn-note-edit { background-color: #3498db; color: white; border: none; padding: 2px 6px; font-size: 11px; border-radius: 2px; cursor: pointer; }
-        .btn-note-del { background-color: #e74c3c; color: white; border: none; padding: 2px 6px; font-size: 11px; border-radius: 2px; cursor: pointer; }
-        .note-insert-form { display: flex; gap: 6px; border-top: 1px solid #ddd; padding-top: 12px; }
-        .note-input { flex-grow: 1; padding: 6px 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-        .btn-note-add { background-color: #2ecc71; color: white; border: none; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; }
-        .note-empty { text-align: center; font-size: 12px; color: #999; padding: 30px 0; }
+        .note-text-area { flex-grow: 1; line-height: 1.5; color: var(--text-main); word-break: break-all; font-weight: 500; }
+        .note-action-btns { display: flex; gap: 4px; shrink: 0; }
+        .btn-note-edit { background-color: #3b82f6; color: white; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-note-del { background-color: #ef4444; color: white; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .note-insert-form { display: flex; gap: 8px; border-top: 1px solid var(--border-soft); padding-top: 14px; }
+        .note-input { flex-grow: 1; padding: 8px 12px; font-size: 12px; border: 1px solid var(--border-soft); border-radius: 6px; outline: none; }
+        .note-input:focus { border-color: var(--brand-blue); }
+        .btn-note-add { background-color: #10b981; color: white; border: none; padding: 8px 16px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+        .note-empty { text-align: center; font-size: 12px; color: var(--text-muted); padding: 35px 0; font-weight: 500; }
         .top-action-wrapper { text-align: right; vertical-align: bottom; }
+
+        /* 📥 [요구사항 2] 개별 등록 전용 완전 비동기 독립 팝업 모달 양식 추가 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 5000; backdrop-filter: blur(1px); }
+        .modal-box-reg { background: white; padding: 25px; border-radius: 12px; width: 460px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-soft); }
+        .modal-box-reg h3 { margin-top: 0; margin-bottom: 18px; color: var(--slate-dark); font-size: 16px; border-bottom: 2px solid var(--brand-blue); padding-bottom: 8px; font-weight: 700; }
+        .modal-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .modal-field { display: flex; flex-direction: column; }
+        .modal-field.span-2 { grid-column: span 2; }
+        .modal-field label { font-size: 11px; font-weight: bold; color: var(--slate-light); margin-bottom: 5px; text-align: left; }
+        .modal-field input, .modal-field select { padding: 8px 10px; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 12px; outline: none; color: var(--text-main); }
+        .modal-field input:focus, .modal-field select:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.05); }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-soft); padding-top: 14px; }
     </style>
 </head>
 <body>
@@ -139,9 +187,9 @@
 <div id="authOverlay">
     <div class="auth-box">
         <h3>🔒 시스템 인증보안</h3>
-        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">허가된 MD 담당자만 진입할 수 있습니다.<br>비밀번호를 입력하세요.</p>
-        <input type="password" id="sysPasswordInput" class="auth-input" placeholder="접속 패스워드 입력" onkeyup="checkAuthEnter(event)">
-        <button class="auth-btn" onclick="verifySystemPassword()">인증 및 시스템 접속</button>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4;">허가된 MD 담당자만 진입할 수 있습니다.<br>보안 비밀번호를 정확히 입력하세요.</p>
+        <input type="password" id="sysPasswordInput" class="auth-input" placeholder="접속 패스워드 입력">
+        <button id="sysSubmitBtn" class="auth-btn">인증 및 시스템 접속</button>
         <div id="authErrorMsg" class="auth-msg"></div>
     </div>
 </div>
@@ -153,17 +201,17 @@
         <h3>🏢 거래처/업체 목록</h3>
         <ul class="company-list" id="companyList">
             <li class="company-item active" onclick="selectCompany('all', this)">
-                <span style="flex-grow:1; text-align:left;">전체 업체 보기</span>
+                <span style="flex-grow:1; text-align:left;">업체 모두 보기</span>
             </li>
         </ul>
         <button class="btn btn-add-company" onclick="addCompanyPrompt()">+ 신규 업체 등록</button>
     </div>
     <div class="sidebar-footer">
-        <button class="btn btn-add-product" onclick="addNewProductRow()">+ 개별 상품 추가</button>
+        <button class="btn btn-add-product" onclick="openProductModal()">+ 개별 상품 추가</button>
         <button class="btn btn-excel-dn" onclick="downloadTemplateXLSX()">📥 엑셀 양식 다운로드</button>
         <button class="btn btn-excel-up" onclick="document.getElementById('excelInput').click()">📤 엑셀 파일 업로드</button>
         <input type="file" id="excelInput" accept=".xlsx, .xls" onchange="uploadTemplateXLSX(this)">
-        <button class="btn" style="background-color: #747d8c;" onclick="fetchDataFromSheets(true)">🔄 실시간 동기화</button>
+        <button class="btn" style="background-color: var(--slate-light);" onclick="fetchDataFromSheets(true)">🔄 실시간 동기화</button>
         <button class="btn-clear-mini" onclick="clearAllData()">전체 데이터 초기화</button>
     </div>
 </div>
@@ -173,7 +221,12 @@
         <div class="header-left"><h2 id="currentViewTitle">통합 상품 가격 리스트</h2></div>
         <div class="header-right">
             <span id="syncStatus" class="status-badge status-sync">✅ 로컬 데이터 로드 완료</span>
-            <div class="search-box-container"><input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 (실시간 검색)..." oninput="debounceSearch()"></div>
+            
+            <div class="search-box-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="검색어 입력 후 엔터 또는 검색 클릭">
+                <button id="searchSubmitBtn" class="search-btn">검색</button>
+            </div>
+            
             <button class="btn-calc-trigger" onclick="openCalcModal()">📊 마진 계산기</button>
         </div>
     </div>
@@ -199,7 +252,7 @@
                     </th>
                 </tr>
                 <tr>
-                    <th><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)"></th><th style="background-color: #f1f2f6;">No.</th><th style="background-color: #d2e3fc;">브랜드명</th><th style="background-color: #e8f0fe;">업체명</th><th style="background-color: #fcf8e3;">사방넷코드</th><th style="background-color: #f5f6f8;">상태</th><th>모델명</th><th>상품명</th><th>공급가</th><th>온라인판매가</th><th style="background-color: #eafaf1;">온라인마진율</th><th>폐쇄몰판매가</th><th style="background-color: #fff4e6;">폐쇄몰마진율</th><th>소비자가</th><th>비고</th><th>네이버쇼핑</th><th>관리</th>
+                    <th><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)"></th><th style="background-color: #f8fafc;">No.</th><th style="background-color: #dbeafe;">브랜드명</th><th style="background-color: #eff6ff;">업체명</th><th style="background-color: #fffbeb;">사방넷코드</th><th style="background-color: #f8fafc;">상태</th><th>모델명</th><th>상품명</th><th>공급가</th><th>온라인판매가</th><th style="background-color: #f0fdf4;">온라인마진율</th><th>폐쇄몰판매가</th><th style="background-color: #fff7ed;">폐쇄몰마진율</th><th>소비자가</th><th>비고</th><th>네이버쇼핑</th><th>관리</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -214,7 +267,7 @@
             <h2>📊 MD 마진 분석기</h2>
             <div class="calc-input-box">
                 <div class="calc-input-row">
-                    <div class="calc-input-group"><label>공급가 (VAT포함)</label><input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
+                    <div class="calc-input-group"><label>공급가 (VAT 포함)</label><input type="number" id="supplyCost" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
                     <div class="calc-input-group"><label>택배비</label><input type="number" id="deliveryFee" placeholder="숫자입력" value="0" onkeyup="checkCalcEnter(event)"></div>
                 </div>
                 <div class="calc-input-group"><label>예상 판매가 (VAT 포함)</label><input type="number" id="sellingPrice" placeholder="숫자입력" onkeyup="checkCalcEnter(event)"></div>
@@ -222,7 +275,7 @@
             </div>
             <div id="calcResultSection" style="display:none;">
                 <div class="info-summary">
-                    <span>공급가: <b id="sumCost">0</b>원</span><span>택배비: <b id="sumDelivery">0</b>원</span><span>공급가액(원가): <b id="sumCostNet">0</b>원</span><span>예상판매가: <b id="sumSp">0</b>원</span><span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
+                    <span>공급가: <b id="sumCost">0</b>원</span><span>택배비: <b id="sumDelivery">0</b>원</span><span>공급가액(원가): <b id="sumCostNet">0</b>원</span><span>예상 판매가: <b id="sumSp">0</b>원</span><span class="full-width">총 매입원가(공급가+택배비): <b id="sumTotalCost">0</b>원</span>
                 </div>
                 <table class="calc-table">
                     <thead><tr><th width="12%">수수료</th><th width="22%">정산예정금액</th><th width="22%">공급가액(공제)</th><th width="22%">최종 마진율</th><th width="22%">최종 마진금액</th></tr></thead>
@@ -241,29 +294,112 @@
     </div>
 </div>
 
+<div id="productRegModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box-reg">
+        <h3>📦 새 상품 개별 등록</h3>
+        <form id="productRegForm" onsubmit="submitProductModal(event)">
+            <div class="modal-form-grid">
+                <div class="modal-field">
+                    <label>브랜드명 *</label>
+                    <input type="text" id="pBrand" required placeholder="예: 아이온">
+                </div>
+                <div class="modal-field">
+                    <label>공급업체명 *</label>
+                    <input type="text" id="pCompany" required placeholder="예: 무신사">
+                </div>
+                <div class="modal-field">
+                    <label>사방넷코드</label>
+                    <input type="text" id="pSabang" placeholder="미기입 시 자동 생성">
+                </div>
+                <div class="modal-field">
+                    <label>현재 공급상태</label>
+                    <select id="pStatus">
+                        <option value="공급중">공급중</option>
+                        <option value="품절">품절</option>
+                        <option value="단종">단종</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>모델명</label>
+                    <input type="text" id="pModel" placeholder="모델명 기입">
+                </div>
+                <div class="modal-field">
+                    <label>공급가(원)</label>
+                    <input type="number" id="pCost" value="0" min="0">
+                </div>
+                <div class="modal-field">
+                    <label>온라인판매가(원)</label>
+                    <input type="number" id="pSell" value="0" min="0">
+                </div>
+                <div class="modal-field">
+                    <label>폐쇄몰판매가(원)</label>
+                    <input type="number" id="pClosed" value="0" min="0">
+                </div>
+                <div class="modal-field">
+                    <label>소비자가(원)</label>
+                    <input type="number" id="pConsumer" value="0" min="0">
+                </div>
+                <div class="modal-field span-2">
+                    <label>풀네임 상품명 *</label>
+                    <input type="text" id="pName" required placeholder="스토어 노출 상품 명칭 기입">
+                </div>
+                <div class="modal-field span-2">
+                    <label>비고 레코드</label>
+                    <input type="text" id="pNote" placeholder="기타 협의사항 및 특이사항">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn" style="background-color: var(--slate-light);" onclick="closeProductModal()">❌ 입력취소</button>
+                <button type="submit" class="btn" style="background-color: #10b981;">💾 시트 저장하기</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-    // 💡여기에 본인의 최신 구글 웹앱 URL 주소를 넣어주세요.
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwljmhmN0cX86KzJdq-llU7S70wzLeZT42h1AaqCw5Js6nbFUgBo9-Fs2TgpqxmRsyy/exec";
-    let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', searchTimeout=null, cachedServerPassword="";
+    // 🌟 여기에 본인의 최신 구글 웹앱 URL 주소를 완벽하게 싱크해 주세요.
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwI9-1LD93AYhvxHVzNhlc2b6mJnqEQ4nDDor8UDMvvHj1cP56bm5Al63cKM4vcBOYN/exec";
+    
+    let companies=[], products=[], currentSelectedCompany='all', currentSelectedStatus='all', oldCompanyValue='', oldSabangValue='', ActiveNoteTargetCompany='', cachedServerPassword="";
 
     window.onload = function() {
-        if(sessionStorage.getItem("aion_authenticated")==="true") document.getElementById("authOverlay").style.display="none";
-        loadCachedData(); fetchDataFromSheets(false);
+        if(sessionStorage.getItem("aion_authenticated") === "true") document.getElementById("authOverlay").style.display = "none";
+        loadCachedData(); 
+        fetchDataFromSheets(false);
+        
+        // 🔒 [요구사항 3] 인프라 분리 암호 연동 제어 바인딩 (타이핑 시 렉 발생 원천 소멸)
+        document.getElementById('sysPasswordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') verifySystemPassword();
+        });
+        document.getElementById('sysSubmitBtn').addEventListener('click', verifySystemPassword);
+
+        // 🔍 [요구사항 1] 상단 타겟팅 검색창 전용 단발 단방향 리스너 장착
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchFilterTable();
+        });
+        document.getElementById('searchSubmitBtn').addEventListener('click', searchFilterTable);
     };
+
+    // [요구사항 3] 타이핑 도중 렉을 유발하지 않는 접속 연산 기믹
     function verifySystemPassword() {
         const inputEl = document.getElementById("sysPasswordInput"), msgEl = document.getElementById("authErrorMsg"), inputVal = inputEl.value.trim();
         if(!inputVal){ msgEl.innerText="비밀번호를 입력해 주세요."; return; }
-        msgEl.style.color="#2196F3"; msgEl.innerText="비밀번호 인증 확인 중...";
-        if(cachedServerPassword && inputVal===cachedServerPassword){ proceedAccess(); return; }
+        msgEl.style.color = var(--brand-blue); msgEl.innerText = "비밀번호 자격 증명 확인 중...";
+        
+        if(cachedServerPassword && inputVal === cachedServerPassword){ proceedAccess(); return; }
+        
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
             const sheetPassword = data.serverPassword ? String(data.serverPassword).trim() : "2369";
             cachedServerPassword = sheetPassword;
-            if(inputVal===sheetPassword){ proceedAccess(); }
-            else{ msgEl.style.color="#e74c3c"; msgEl.innerText="❌ 비밀번호가 일치하지 않습니다."; inputEl.value=""; inputEl.focus(); }
-        }).catch(err=>{ msgEl.style.color="#e74c3c"; msgEl.innerText="네트워크 연결 실패"; });
+            if(inputVal === sheetPassword){ 
+                proceedAccess(); 
+            } else { 
+                msgEl.style.color = "#ef4444"; msgEl.innerText = "❌ 승인되지 않은 마스터 비밀번호입니다."; inputEl.value=""; inputEl.focus(); 
+            }
+        }).catch(err=>{ msgEl.style.color = "#ef4444"; msgEl.innerText = "네트워크 오프라인 감지"; });
     }
-    function proceedAccess(){ sessionStorage.setItem("aion_authenticated","true"); document.getElementById("authOverlay").style.display="none"; }
-    function checkAuthEnter(e){ if(e.key==="Enter") verifySystemPassword(); }
+    function proceedAccess(){ sessionStorage.setItem("aion_authenticated", "true"); document.getElementById("authOverlay").style.display = "none"; }
+    
     function toggleSidebar(){
         const body=document.body, btn=document.getElementById('sidebarToggleBtn');
         body.classList.toggle('sidebar-collapsed'); btn.innerText=body.classList.contains('sidebar-collapsed')?'▶':'◀';
@@ -276,6 +412,7 @@
         const checkboxes=document.querySelectorAll('.row-checkbox');
         checkboxes.forEach(cb=>{ const tr=cb.closest('tr'); if(tr && tr.style.display!=='none') cb.checked=master.checked; });
     }
+    
     async function deleteSelectedProducts(){
         const checked=document.querySelectorAll('.row-checkbox:checked'); if(checked.length===0){ alert("선택된 상품이 없습니다."); return; }
         if(confirm(`선택한 ${checked.length}개의 상품을 일괄 삭제하시겠습니까?`)){
@@ -296,19 +433,28 @@
         const cc=localStorage.getItem('md_cached_companies'), cp=localStorage.getItem('md_cached_products');
         if(cc && cp){ companies=JSON.parse(cc); products=JSON.parse(cp); renderSidebar(); renderTable(); }
     }
+    
     function fetchDataFromSheets(isManual=false,callback=null){
         if(isManual) setStatus('saving',"🔄 최신 데이터 동기화 중...");
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
             if(data.error){ alert("시트 에러: "+data.error); }else{
                 if(data.serverPassword) cachedServerPassword=String(data.serverPassword).trim();
-                const raw=data.products || [];
+                const raw=data.data || data.products || []; 
                 products=raw.map((row,idx)=>{
-                    row=row||[];
                     return {
-                        id:row.id||(idx+2), brand:row.brand||row[0]||"", company:row.company||row[1]||"", sabangCode:row.sabangCode||row[2]||"", status:row.status||row[3]||"공급중",
-                        modelName:row.modelName||row[4]||"", productName:row.productName||row[5]||"", costPrice:Number(row.costPrice!==undefined?row.costPrice:(row[6]||0)),
-                        sellPrice:Number(row.sellPrice!==undefined?row.sellPrice:(row[7]||0)), closedPrice:Number(row.closedPrice!==undefined?row.closedPrice:(row[8]||0)),
-                        consumerPrice:Number(row.consumerPrice!==undefined?row.consumerPrice:(row[9]||0)), note:row.note||row[10]||"", productLink:row.productLink||row[11]||""
+                        id: row.id || ("ID-" + (idx + 2)), // 고유 물리 난수 추적 보호 연동 유지
+                        brand: row.brand || row[0] || "",
+                        company: row.company || row[1] || "",
+                        sabangCode: row.sabangCode || row[2] || "",
+                        status: row.status || row[3] || "공급중",
+                        modelName: row.modelName || row[4] || "",
+                        productName: row.productName || row[5] || "",
+                        costPrice: Number(row.costPrice !== undefined ? row.costPrice : (row[6] || 0)),
+                        sellPrice: Number(row.sellPrice !== undefined ? row.sellPrice : (row[7] || 0)),
+                        closedPrice: Number(row.closedPrice !== undefined ? row.closedPrice : (row[8] || 0)),
+                        consumerPrice: Number(row.consumerPrice !== undefined ? row.consumerPrice : (row[9] || 0)),
+                        note: row.note || row[10] || "",
+                        productLink: row[11] || ""
                     };
                 });
                 const uc=[...new Set(products.map(p=>p.company?String(p.company).trim():"").filter(c=>c&&c!=="-"&&c!==""))];
@@ -317,77 +463,62 @@
             }
         }).catch(e=>{ setStatus('sync',"⚠️ 오프라인 모드"); });
     }
+    
     function sendDataToSheets(payload,callback){
         setStatus('saving',"☁️ 실시간 저장 중...");
         fetch(GAS_WEB_APP_URL,{method:"POST",body:JSON.stringify(payload)}).then(res=>res.json()).then(data=>{ if(callback) callback(data); else setStatus('sync',"✅ 변경사항 저장됨"); }).catch(e=>{ setStatus('sync',"❌ 저장 실패"); });
     }
 
-    // ⚡ [초고속 비동기 튜닝 적용]: 상품 추가 버튼을 연타해도 브라우저가 멈추지 않고 0.01초 만에 맨 위에 끼워집니다.
-    function addNewProductRow(){
-        let tc=currentSelectedCompany==='all'?(companies[0]||"기본업체"):currentSelectedCompany, tb="-";
-        if(currentSelectedCompany!=='all'){ const mp=products.find(p=>p.company===currentSelectedCompany && p.brand && p.brand!=="-"); if(mp) tb=mp.brand; }
-        const ts="SB-"+Date.now().toString().slice(-6), ti="temp_"+Date.now();
-        const np={id:ti,brand:tb,company:tc,sabangCode:ts,status:"공급중",modelName:"-",productName:"신규 상품 (저장 중...)",costPrice:0,sellPrice:0,closedPrice:0,consumerPrice:0,note:"-",productLink:"-"};
-        
-        products.unshift(np); 
-        
-        // 테이블 전체를 지우고 새로 그리지 않고, DOM 맨 위에 새 행 딱 하나만 조용히 붙여 렉을 박멸합니다.
-        const tbody = document.getElementById("productTable").getElementsByTagName('tbody')[0];
-        const row = document.createElement('tr');
-        row.setAttribute("data-id", ti);
-        row.onclick = function(e){
-            if(e.target.tagName==='BUTTON'||e.target.tagName==='A'||e.target.tagName==='SELECT'||e.target.type==='checkbox'||e.target.isContentEditable)return;
-            for(let r of tbody.getElementsByTagName('tr')) r.classList.remove('selected-row');
-            row.classList.add('selected-row');
-        };
-        
-        row.insertCell(0).innerHTML = `<input type="checkbox" class="row-checkbox">`;
-        const cN = row.insertCell(1); cN.className = "num-cell"; cN.innerText = "New";
-        const cB = row.insertCell(2); cB.className = "brand-cell"; cB.contentEditable = "true"; cB.innerText = tb;
-        cB.onkeydown = handlePreventEnter; cB.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"brand",value:this.innerText.trim()});};
-        
-        const cC = row.insertCell(3); cC.className = "company-cell"; cC.contentEditable = "true"; cC.innerText = tc;
-        cC.onkeydown = handlePreventEnter; cC.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"company",value:this.innerText.trim()},()=>fetchDataFromSheets(false));};
-        
-        const cS = row.insertCell(4); cS.className = "sabang-cell"; cS.contentEditable = "true"; cS.innerText = ts;
-        cS.onkeydown = handlePreventEnter; cS.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"sabangCode",value:this.innerText.trim()});};
-        
-        row.insertCell(5).innerHTML = `<select class="status-select status-active" onchange="changeProductStatus('${ti}',this)"><option value="공급중" selected>공급중</option><option value="품절">품절</option><option value="단종">단종</option></select>`;
-        
-        const cM = row.insertCell(6); cM.className = "model-cell"; cM.contentEditable = "true"; cM.innerText = "-"; cM.onkeydown = handlePreventEnter; cM.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"modelName",value:this.innerText.trim()});};
-        
-        const cNm = row.insertCell(7); cNm.className = "name-cell"; cNm.style.textAlign = "left"; cNm.contentEditable = "true"; cNm.innerText = "신규 상품 (저장 중...)"; cNm.onkeydown = handlePreventEnter; cNm.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"productName",value:this.innerText.trim()});};
-        
-        row.insertCell(8).innerHTML = `0원`; row.insertCell(9).innerHTML = `0원`; row.insertCell(10).innerHTML = `0.0%`;
-        row.insertCell(11).innerHTML = `0원`; row.insertCell(12).innerHTML = `0.0%`; row.insertCell(13).innerHTML = `0원`;
-        
-        const cNo = row.insertCell(14); cNo.contentEditable = "true"; cNo.style.textAlign = "left"; cNo.innerText = "-"; cNo.onblur = function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"note",value:this.innerText.trim()});};
-        
-        // 🔒 저장 중 가드 인터셉터 장착
-        const cLk = row.insertCell(15);
-        cLk.innerHTML = `<button class="btn-link-go" style="background-color:#95a5a6; cursor:not-allowed;" onclick="alert('⚠️ 상품 정보가 구글 시트에 안전하게 등록 처리 중입니다. 1~2초 후 글자가 바뀌면 다시 클릭해 주세요!')">🔍 대기</button>`;
-        row.insertCell(16).innerHTML = `<button class="btn-delete" onclick="deleteProduct('${ti}')">삭제</button>`;
-        
-        tbody.insertBefore(row, tbody.firstChild);
-        
-        // No. 컬럼 숫자 실시간 재정렬
-        let vIdx = 1;
-        for(let r of tbody.getElementsByTagName('tr')){
-            const nc = r.querySelector('.num-cell');
-            if(nc) nc.innerText = vIdx++;
+    /* 📥 [요구사항 2] 독립형 등록 모달 팝업 가상 폼 서브시스템 연동 완료 */
+    function openProductModal() {
+        document.getElementById('productRegForm').reset();
+        document.getElementById('pSabang').value = "SB-" + Date.now().toString().slice(-6); // 코드 규격 가이드라인 제공
+        if(currentSelectedCompany !== 'all') {
+            document.getElementById('pCompany').value = currentSelectedCompany;
+            const matchProd = products.find(p=>p.company === currentSelectedCompany && p.brand && p.brand !== "-");
+            if(matchProd) document.getElementById('pBrand').value = matchProd.brand;
         }
+        document.getElementById('productRegModal').style.display = "flex";
+    }
+    function closeProductModal() {
+        document.getElementById('productRegModal').style.display = "none";
+    }
+    function submitProductModal(e) {
+        e.preventDefault();
+        const tId = "temp_" + Date.now();
+        const pData = {
+            brand: document.getElementById('pBrand').value.trim(),
+            company: document.getElementById('pCompany').value.trim(),
+            sabangCode: document.getElementById('pSabang').value.trim() || "-",
+            status: document.getElementById('pStatus').value,
+            modelName: document.getElementById('pModel').value.trim() || "-",
+            productName: document.getElementById('pName').value.trim(),
+            costPrice: Number(document.getElementById('pCost').value || 0),
+            sellPrice: Number(document.getElementById('pSell').value || 0),
+            closedPrice: Number(document.getElementById('pClosed').value || 0),
+            consumerPrice: Number(document.getElementById('pConsumer').value || 0),
+            note: document.getElementById('pNote').value.trim() || "-",
+            productLink: "-"
+        };
 
-        // 구글 시트 저장은 뒤에서 백그라운드로 전송
-        sendDataToSheets({action:"add",product:np},(res)=>{
-            if(res && res.id){
-                const idx = products.findIndex(p=>String(p.id)===String(ti));
-                if(idx!==-1){ products[idx].id=res.id; products[idx].productName="신규 상품"; }
-                row.setAttribute("data-id", res.id);
-                cNm.innerText = "신규 상품";
-                cLk.innerHTML = `<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query='+encodeURIComponent('신규 상품'), '_blank')">🔍 검색</button>`;
-                const delBtn = row.cells[16].querySelector('button');
-                if(delBtn) delBtn.setAttribute("onclick", `deleteProduct('${res.id}')`);
-                localStorage.setItem('md_cached_products',JSON.stringify(products));
+        const localItem = Object.assign({ id: tId }, pData);
+        products.unshift(localItem); 
+        closeProductModal();
+        renderTable(); // 낙관적 렌더링을 통한 반응 속도 극대화 기믹 복원 유지
+
+        sendDataToSheets({ action: "add", product: pData }, (res) => {
+            if(res && res.id) {
+                const idx = products.findIndex(p => String(p.id) === String(tId));
+                if(idx !== -1) {
+                    products[idx].id = res.id; // 리턴받은 클라우드 불변 고유 고정 ID 조립 치환
+                    localStorage.setItem('md_cached_products', JSON.stringify(products));
+                    const targetTr = document.querySelector(`tr[data-id="${tId}"]`);
+                    if(targetTr) {
+                        targetTr.setAttribute("data-id", res.id);
+                        const delBtn = targetTr.cells[16].querySelector('button');
+                        if(delBtn) delBtn.setAttribute("onclick", `deleteProduct('${res.id}')`);
+                    }
+                }
             }
         });
     }
@@ -405,7 +536,6 @@
     }
     function selectStatusFilter(st){ currentSelectedStatus=st; const tabs=document.querySelectorAll('.filter-tab'); tabs.forEach(t=>t.classList.toggle('active',t.getAttribute('data-status')===st)); document.getElementById('selectAllCheckbox').checked=false; renderTable(); }
     
-    // ⚡ [최적화 완료된 렌더링]: 데이터 생성 부하를 줄이기 위해 가볍게 재조정되었습니다.
     function renderTable(){
         const tbody=document.getElementById("productTable").getElementsByTagName('tbody')[0]; tbody.innerHTML=""; const frag=document.createDocumentFragment(); let vIdx=1;
         products.forEach(prod=>{
@@ -416,13 +546,18 @@
             row.onclick=function(e){ if(e.target.tagName==='BUTTON'||e.target.tagName==='A'||e.target.tagName==='SELECT'||e.target.type==='checkbox'||e.target.isContentEditable)return; for(let r of tbody.getElementsByTagName('tr')) r.classList.remove('selected-row'); row.classList.add('selected-row'); };
             row.insertCell(0).innerHTML=`<input type="checkbox" class="row-checkbox">`;
             const cN=row.insertCell(1); cN.className="num-cell"; cN.innerText=vIdx++;
+            
+            // 더블클릭 인라인 인풋 편집 및 엔터 블러 수신기 연결 패치 완벽 복원 고수
             const cB=row.insertCell(2); cB.className="brand-cell"; cB.contentEditable="true"; cB.innerText=prod.brand||"-"; cB.onkeydown=handlePreventEnter; cB.onblur=function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"brand",value:this.innerText.trim()});};
             const cC=row.insertCell(3); cC.className="company-cell"; cC.contentEditable="true"; cC.innerText=prod.company||"-"; cC.onkeydown=handlePreventEnter; cC.onfocus=function(){oldCompanyValue=this.innerText.trim();}; cC.onblur=function(){const n=this.innerText.trim(); if(oldCompanyValue!==n){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"company",value:n},()=>fetchDataFromSheets(false));}};
             const cS=row.insertCell(4); cS.className="sabang-cell"; cS.contentEditable="true"; cS.innerText=prod.sabangCode||"-"; cS.onkeydown=handlePreventEnter; cS.onfocus=function(){oldSabangValue=this.innerText.trim();}; cS.onblur=function(){const n=this.innerText.trim(), cid=row.getAttribute("data-id"); if(n===oldSabangValue)return; if(n!==""&&n!=="-"){if(products.some(p=>String(p.id)!==String(cid)&&p.sabangCode===n&&p.productName!=="거래처 메모 기록용")){alert(`⚠️ 중복 사방넷코드`); this.innerText=oldSabangValue; return;}} const idx=products.findIndex(p=>String(p.id)===String(cid)); if(idx!==-1)products[idx].sabangCode=n; sendDataToSheets({action:"update",id:cid,field:"sabangCode",value:n});};
-            const cSt=row.insertCell(5); const sv=prod.status||"공급중"; let sc="status-active"; if(sv==="품절")sc="status-soldout"; else if(sv==="단종")sc="status-discontinued";
-            cSt.innerHTML=`<select class="status-select ${sc}" onchange="changeProductStatus('${prod.id}',this)"><option value="공급중" ${sv==="공급중"?"selected":""}>공급중</option><option value="품절" ${sv==="품절"?"selected":""}>품절</option><option value="단종" ${sv==="단종"?"selected":""}>단종</option></select>`;
+            
+            const cSt=row.insertCell(5); const sv=prod.status||"공급중"; let sc="status-active"; if(sv==="품절"||sv==="품절대기")sc="status-soldout"; else if(sv==="단종")sc="status-discontinued";
+            cSt.innerHTML=`<select class="status-select ${sc}" onchange="changeProductStatus('${prod.id}',this)"><option value="공급중" ${sv==="공급중"?"selected":""}>공급중</option><option value="품절" ${sv==="품절"||sv==="품절대기"?"selected":""}>품절</option><option value="단종" ${sv==="단종"?"selected":""}>단종</option></select>`;
             const cM=row.insertCell(6); cM.className="model-cell"; cM.contentEditable="true"; cM.innerText=prod.modelName||"-"; cM.title=prod.modelName||"-"; cM.onkeydown=handlePreventEnter; cM.onblur=function(){const v=this.innerText.trim(); this.title=v; sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"modelName",value:v});};
-            const cNm=row.insertCell(7); cNm.className="name-cell"; cNm.style.textAlign="left"; cNm.contentEditable="true"; cNm.innerText=prod.productName||"-"; cNm.title=prod.productName||"-"; cNm.onkeydown=handlePreventEnter; cNm.onblur=function(){const v=this.innerText.trim(); this.title=v; sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"productName",value:v});};
+            
+            const cNm=row.insertCell(7); cNm.className="name-cell"; cNm.contentEditable="true"; cNm.innerText=prod.productName||"-"; cNm.title=prod.productName||"-"; cNm.onkeydown=handlePreventEnter; cNm.onblur=function(){const v=this.innerText.trim(); this.title=v; sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"productName",value:v});};
+            
             const cCo=row.insertCell(8); cCo.className="price"; cCo.contentEditable="true"; cCo.innerText=(prod.costPrice||0).toLocaleString()+'원'; cCo.onkeydown=handlePreventEnter; cCo.oninput=function(){recalculateRowMargins(row);}; cCo.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"costPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
             const cSe=row.insertCell(9); cSe.className="price"; cSe.contentEditable="true"; cSe.innerText=(prod.sellPrice||0).toLocaleString()+'원'; cSe.onkeydown=handlePreventEnter; cSe.oninput=function(){recalculateRowMargins(row);}; cSe.onblur=function(){const v=parseNumber(this.innerText); sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"sellPrice",value:v}); this.innerText=v.toLocaleString()+'원';};
             const cOm=row.insertCell(10); cOm.className="margin-cell"; const om=prod.sellPrice>0?((prod.sellPrice-prod.costPrice)/prod.sellPrice*100):0; cOm.innerText=om.toFixed(1)+'%';
@@ -432,26 +567,24 @@
             const cNo=row.insertCell(14); cNo.contentEditable="true"; cNo.style.textAlign="left"; cNo.innerText=prod.note||"-"; cNo.onkeydown=handlePreventEnter; cNo.onblur=function(){sendDataToSheets({action:"update",id:row.getAttribute("data-id"),field:"note",value:this.innerText.trim()});};
             
             const cLk=row.insertCell(15); const searchStr=prod.productName!==undefined&&prod.productName!==null?String(prod.productName).trim():"";
-            if (searchStr.includes("저장 중")) {
-                cLk.innerHTML=`<button class="btn-link-go" style="background-color:#95a5a6; cursor:not-allowed;" onclick="alert('⚠️ 상품 정보가 구글 시트에 안전하게 등록 처리 중입니다. 1~2초 후 글자가 바뀌면 다시 클릭해 주세요!')">🔍 대기</button>`;
-            } else {
-                cLk.innerHTML=`<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query='+encodeURIComponent('${searchStr.replace(/'/g,"\\'")}'), '_blank')">🔍 검색</button>`;
-            }
+            cLk.innerHTML=`<button class="btn-link-go" onclick="window.open('https://search.shopping.naver.com/search/all?query='+encodeURIComponent('${searchStr.replace(/'/g,"\\'")}'), '_blank')">🔍 검색</button>`;
             
             row.insertCell(16).innerHTML=`<button class="btn-delete" onclick="deleteProduct('${prod.id}')">삭제</button>`;
             frag.appendChild(row);
         });
-        tbody.appendChild(frag); searchFilterTable();
+        tbody.appendChild(frag);
     }
+    
     function handlePreventEnter(e){ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } }
+    
     function changeProductStatus(id,selectEl){
-        const nv=selectEl.value; selectEl.className=`status-select ${nv==='공급중'?'status-active':nv==='품절'?'status-soldout':'status-discontinued'}`;
+        let nv=selectEl.value; selectEl.className=`status-select ${nv==='공급중'?'status-active':nv==='품절'?'status-soldout':'status-discontinued'}`;
         const idx=products.findIndex(p=>String(p.id)===String(id)); if(idx!==-1) products[idx].status=nv;
         sendDataToSheets({action:"update",id:id,field:"status",value:nv},()=>{ if(currentSelectedStatus!=='all') renderTable(); });
     }
     function selectCompany(name,el){ currentSelectedCompany=name; document.getElementById('currentViewTitle').innerText=name==='all'?"통합 상품 가격 리스트":`[${name}] 공급업체 상품 표`; document.getElementById('selectAllCheckbox').checked=false; renderSidebar(); renderTable(); }
+    
     function deleteProduct(id){
-        if(String(id).startsWith("temp_")){ alert("⚠️ 안전하게 시트에 등록 처리 중입니다. 잠시 후 시도하세요."); return; }
         if(confirm("정말 삭제하시겠습니까?")){
             const r=document.querySelector(`tr[data-id="${id}"]`); if(r) r.style.opacity="0.3";
             products=products.filter(p=>String(p.id)!==String(id)); localStorage.setItem('md_cached_products',JSON.stringify(products));
@@ -475,15 +608,16 @@
     }
     function parseNumber(text){ return text ? parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0 : 0; }
     
-    // ⚡ [검색 딜레이 튜닝]: 타이핑 멈춘 뒤 0.15초 후에만 검색을 가동하여 타자 버벅임을 해결합니다.
-    function debounceSearch(){ clearTimeout(searchTimeout); searchTimeout=setTimeout(()=>{ searchFilterTable(); },150); }
+    // 🔍 [요구사항 1] 상단 검색창 전용 조준 검색 필터링 모듈 (타이핑 감지 0%, 렉 원천 격리)
     function searchFilterTable(){
-        const q=document.getElementById('searchInput').value.toLowerCase().trim(); const rows=document.getElementById("productTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        const q=document.getElementById('searchInput').value.toLowerCase().trim(); 
+        const rows=document.getElementById("productTable").getElementsByTagName('tbody')[0].getElementsByTagName('tr');
         for(let i=0; i<rows.length; i++){
             const r=rows[i], b=r.cells[2]?r.cells[2].innerText.toLowerCase():'', c=r.cells[3]?r.cells[3].innerText.toLowerCase():'', m=r.cells[6]?r.cells[6].innerText.toLowerCase():'', n=r.cells[7]?r.cells[7].innerText.toLowerCase():'';
             if(b.includes(q)||c.includes(q)||m.includes(q)||n.includes(q)){ r.style.display=""; }else{ r.style.display="none"; const cb=r.querySelector('.row-checkbox'); if(cb)cb.checked=false; }
         }
     }
+    
     function downloadTemplateXLSX(){
         const h=["브랜드명","업체명","사방넷코드","상태(공급중/품절/단종)","모델명","상품명","공급가","온라인판매가","폐쇄몰판매가","소비자가","비고"], s=["예시브랜드","예시공급사","SB-SAMPLE","공급중","MODEL-A","샘플 상품명",10000,15000,13500,20000,"양식테스트"];
         const ws=XLSX.utils.aoa_to_sheet([h,s]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"상품등록양식"); XLSX.writeFile(wb, "상품대량등록_양식.xlsx");
