@@ -9,7 +9,6 @@
     <style>
         :root {
             --primary-color: #2196F3;
-            --primary-dark: #1e88e5;
             --secondary-color: #2f3542;
             --sidebar-bg: #2f3542;
             --bg-color: #f5f6f8;
@@ -29,7 +28,7 @@
         .auth-input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; text-align: center; margin-bottom: 15px; outline: none; }
         .auth-btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
 
-        /* 사이드바 (업체 추가 및 메모 버튼) */
+        /* 사이드바 */
         .sidebar { width: var(--sidebar-width); background-color: var(--sidebar-bg); color: white; height: 100vh; position: fixed; top: 0; left: 0; padding: 25px 15px; box-sizing: border-box; display: flex; flex-direction: column; z-index: 100; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
         .sidebar-top { overflow-y: auto; flex-grow: 1; margin-bottom: 20px; }
         .sidebar h3 { margin-top: 0; padding-bottom: 15px; border-bottom: 1px solid #57606f; font-size: 16px; color: #a4b0be; letter-spacing: 1px; }
@@ -38,12 +37,11 @@
         .company-item:hover { background-color: #4b556a; }
         .company-item.active { background-color: var(--primary-color); font-weight: bold; }
         .btn-company-note { background: #57606f; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
-        .btn-company-note:hover { background: var(--warning-color); color: #333; }
         
         .sidebar-footer { border-top: 1px solid #57606f; padding-top: 20px; display: flex; flex-direction: column; gap: 10px; }
         .btn-sidebar { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: all 0.2s; text-align: center; }
         .btn-add-product { background-color: var(--success-color); color: white; }
-        .btn-add-company { background-color: var(--primary-color); color: white; margin-bottom: 5px; }
+        .btn-add-company { background-color: var(--primary-color); color: white; }
         .btn-excel-dn { background-color: #f39c12; color: white; }
         .btn-excel-up { background-color: #9b59b6; color: white; }
 
@@ -67,7 +65,7 @@
         .filter-tab[data-status="품절"].active { background: #e67e22; border-color: #e67e22; }
         .filter-tab[data-status="단종"].active { background: var(--error-color); border-color: var(--error-color); }
 
-        /* 테이블 (실시간 수정 가능) */
+        /* 테이블 */
         .table-wrapper { flex-grow: 1; padding: 20px 35px; overflow-y: auto; }
         .table-card { background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -75,6 +73,10 @@
         td { padding: 14px 10px; border-bottom: 1px solid #f1f2f6; font-size: 13px; text-align: center; }
         tr:hover { background-color: #f9fbff; }
         
+        /* 실시간 수정 셀 스타일 */
+        [contenteditable="true"] { outline: none; padding: 5px; border-radius: 4px; transition: background 0.2s; }
+        [contenteditable="true"]:focus { background-color: #fff9db; box-shadow: inset 0 0 0 1px #f1c40f; }
+
         .name-cell { 
             text-align: left; 
             padding-left: 20px;
@@ -97,11 +99,8 @@
         .status-품절 { color: #d35400; background-color: #fef5e7; }
         .status-단종 { color: #c0392b; background-color: #fdedec; }
 
-        .manage-area { display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .note-icon { font-size: 20px; cursor: pointer; transition: all 0.2s; opacity: 0.3; filter: grayscale(1); border: none; background: none; padding: 0; }
+        .note-icon { font-size: 20px; cursor: pointer; opacity: 0.3; filter: grayscale(1); border: none; background: none; padding: 0; }
         .note-icon.active { opacity: 1; filter: none; }
-        .del-icon { font-size: 18px; cursor: pointer; color: #bdc3c7; border: none; background: none; padding: 0; transition: all 0.2s; }
-        .del-icon:hover { color: var(--error-color); transform: scale(1.2); }
 
         /* 모달 */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
@@ -120,7 +119,6 @@
         .btn-confirm { background-color: var(--primary-color); color: white; padding: 12px 30px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-close { background-color: #bdc3c7; color: white; padding: 12px 25px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
-        /* 마진 분석 패널 */
         .side-panel { display: none; position: fixed; right: 0; top: 0; width: 450px; height: 100vh; background: white; z-index: 1001; box-shadow: -10px 0 30px rgba(0,0,0,0.15); padding: 40px; box-sizing: border-box; }
     </style>
 </head>
@@ -129,7 +127,7 @@
 <div id="authOverlay">
     <div class="auth-box">
         <div style="font-size: 50px; margin-bottom: 20px;">🔐</div>
-        <h3 style="margin-bottom: 10px;">아이온 통합관리 v7 인증</h3>
+        <h3 style="margin-bottom: 10px;">아이온 통합관리 v8 인증</h3>
         <p style="font-size: 14px; color: #7f8c8d; margin-bottom: 30px;">관리자 암호를 입력하세요.</p>
         <input type="password" id="sysPasswordInput" class="auth-input" placeholder="비밀번호 입력" onkeyup="if(event.key==='Enter') verifySystemPassword()">
         <button class="auth-btn" onclick="verifySystemPassword()">인증 및 접속</button>
@@ -143,9 +141,9 @@
         <ul class="company-list" id="companyList">
             <li class="company-item active" onclick="selectCompany('all', this)"><span>전체 업체 보기</span></li>
         </ul>
-        <button class="btn-sidebar btn-add-company" onclick="addCompanyPrompt()">+ 업체 추가</button>
     </div>
     <div class="sidebar-footer">
+        <button class="btn-sidebar btn-add-company" onclick="addCompanyPrompt()">+ 업체 추가 등록</button>
         <button class="btn-sidebar btn-add-product" onclick="openAddProductModal()">📦 개별 상품 등록</button>
         <button class="btn-sidebar btn-excel-dn" onclick="downloadTemplateXLSX()">📥 백업 엑셀 다운</button>
         <button class="btn-sidebar btn-excel-up" onclick="document.getElementById('excelInput').click()">📤 엑셀 대량 업로드</button>
@@ -174,7 +172,7 @@
                 <button class="filter-tab" data-status="품절" onclick="selectStatusFilter('품절')">품절</button>
                 <button class="filter-tab" data-status="단종" onclick="selectStatusFilter('단종')">단종</button>
             </div>
-            <button style="background: none; border: 1px solid #ddd; padding: 8px 15px; border-radius: 8px; font-size: 12px; cursor: pointer; color: #7f8c8d;" onclick="deleteSelectedProducts()">선택 삭제</button>
+            <button style="background: var(--error-color); color:white; border: none; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight:bold; cursor: pointer;" onclick="deleteSelectedProducts()">선택 상품 삭제</button>
         </div>
     </div>
 
@@ -182,7 +180,7 @@
         <div class="table-card">
             <table id="productTable">
                 <colgroup>
-                    <col style="width: 45px;"><col style="width: 45px;"><col style="width: 100px;"><col style="width: 120px;"><col style="width: 100px;"><col style="width: 90px;"><col style="width: 140px;"><col style="width: auto;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 80px;"><col style="width: 100px;"><col style="width: 80px;"><col style="width: 80px;"><col style="width: 100px;">
+                    <col style="width: 45px;"><col style="width: 45px;"><col style="width: 100px;"><col style="width: 120px;"><col style="width: 100px;"><col style="width: 90px;"><col style="width: 140px;"><col style="width: auto;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 80px;"><col style="width: 100px;"><col style="width: 80px;"><col style="width: 80px;"><col style="width: 80px;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -193,14 +191,14 @@
                         <th>코드</th>
                         <th>상태</th>
                         <th>모델명</th>
-                        <th>상품명 (실시간 수정 가능)</th>
+                        <th>상품명 (실시간 수정)</th>
                         <th>공급가</th>
                         <th>온라인가</th>
                         <th>마진</th>
                         <th>폐쇄몰</th>
                         <th>마진</th>
                         <th>쇼핑</th>
-                        <th>관리</th>
+                        <th>메모</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -209,7 +207,7 @@
     </div>
 </div>
 
-<!-- 업체 메모 모달 (별도 시트) -->
+<!-- 업체 메모 모달 -->
 <div id="companyNoteModal" class="modal">
     <div class="modal-content" style="width: 500px;">
         <div class="modal-header"><h3 id="compNoteTitle">업체 특이사항</h3></div>
@@ -227,7 +225,7 @@
     </div>
 </div>
 
-<!-- 제품 메모 모달 (시트1 저장) -->
+<!-- 제품 메모 모달 -->
 <div id="productNoteModal" class="modal">
     <div class="modal-content" style="width: 500px;">
         <div class="modal-header"><h3 id="prodNoteTitle">제품 개별 메모</h3></div>
@@ -245,22 +243,14 @@
     </div>
 </div>
 
-<!-- 상품 등록 모달 (드롭다운 적용) -->
+<!-- 상품 등록 모달 (타이핑 방식 복구) -->
 <div id="addProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h3>✨ 신규 상품 등록</h3></div>
         <div class="modal-body">
             <div class="form-grid">
-                <div class="form-item">
-                    <label>브랜드명</label>
-                    <input type="text" id="new_brand" list="brandList" placeholder="선택 또는 입력">
-                    <datalist id="brandList"></datalist>
-                </div>
-                <div class="form-item">
-                    <label>업체명</label>
-                    <input type="text" id="new_company" list="companyListOptions" placeholder="선택 또는 입력">
-                    <datalist id="companyListOptions"></datalist>
-                </div>
+                <div class="form-item"><label>브랜드명</label><input type="text" id="new_brand" placeholder="브랜드 입력"></div>
+                <div class="form-item"><label>업체명</label><input type="text" id="new_company" placeholder="업체명 입력"></div>
                 <div class="form-item"><label>모델명</label><input type="text" id="new_modelName" placeholder="모델명 입력"></div>
                 <div class="form-item"><label>판매 상태</label>
                     <select id="new_status">
@@ -274,7 +264,7 @@
                 <div class="form-item"><label>온라인 판매가</label><input type="number" id="new_sellPrice" value="0"></div>
                 <div class="form-item"><label>폐쇄몰 판매가</label><input type="number" id="new_closedPrice" value="0"></div>
                 <div class="form-item"><label>소비자가</label><input type="number" id="new_consumerPrice" value="0"></div>
-                <div class="form-item full"><label>제품 메모 (시트1 우측 저장)</label><input type="text" id="new_note" placeholder="메모 입력"></div>
+                <div class="form-item full"><label>제품 메모</label><input type="text" id="new_note" placeholder="메모 입력"></div>
             </div>
         </div>
         <div class="modal-footer">
@@ -307,18 +297,18 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDL4Y5TO1jkk3qs84CNAljr_vhupflW0WOIjV6RDvYaQKpEcIhOddpXoTjieGLnbkW/exec";
-    let products=[], companies=[], brands=[], companyNotes={}, currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveProdId='', ActiveCompName='';
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyAFS0c7EBldhvpwzHpl0FSNQpLCqOx5ChSKOqqGMp-5xGt5K87JbPbtHaxKm4wit3/exec";
+    let products=[], companies=[], companyNotes={}, currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveProdId='', ActiveCompName='';
 
     window.onload = function() {
-        if(sessionStorage.getItem("aion_auth_v7")==="true") document.getElementById("authOverlay").style.display="none";
+        if(sessionStorage.getItem("aion_auth_v8")==="true") document.getElementById("authOverlay").style.display="none";
         fetchDataFromSheets();
     };
 
     function verifySystemPassword() {
         const input = document.getElementById("sysPasswordInput").value;
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
-            if(input === String(data.serverPassword || "2369")){ sessionStorage.setItem("aion_auth_v7","true"); document.getElementById("authOverlay").style.display="none"; }
+            if(input === String(data.serverPassword || "2369")){ sessionStorage.setItem("aion_auth_v8","true"); document.getElementById("authOverlay").style.display="none"; }
             else { document.getElementById("authErrorMsg").innerText = "비밀번호가 틀렸습니다."; }
         });
     }
@@ -329,8 +319,7 @@
             products = data.products || [];
             companyNotes = data.companyNotes || {};
             companies = [...new Set(products.map(p=>p.company).filter(c=>c&&c!=='-'))].sort();
-            brands = [...new Set(products.map(p=>p.brand).filter(b=>b&&b!=='-'))].sort();
-            renderSidebar(); updateDatalists(); renderTable();
+            renderSidebar(); renderTable();
             document.getElementById('syncStatus').innerText = "● Connected";
         }).catch(()=> { document.getElementById('syncStatus').innerText = "● Offline"; });
     }
@@ -345,11 +334,6 @@
             li.onclick = () => selectCompany(c, li);
             list.appendChild(li);
         });
-    }
-
-    function updateDatalists(){
-        document.getElementById('brandList').innerHTML = brands.map(b=>`<option value="${b}">`).join('');
-        document.getElementById('companyListOptions').innerHTML = companies.map(c=>`<option value="${c}">`).join('');
     }
 
     function renderTable(){
@@ -388,7 +372,7 @@
                         <option value="단종" ${p.status==='단종'?'selected':''}>단종</option>
                     </select>
                 </td>
-                <td class="model-cell" contenteditable="true" onblur="updateCell('${p.id}','modelName',this.innerText)" onkeydown="handleEnterKey(event)">${p.modelName}</td>
+                <td style="font-weight:700;" contenteditable="true" onblur="updateCell('${p.id}','modelName',this.innerText)" onkeydown="handleEnterKey(event)">${p.modelName}</td>
                 <td class="name-cell" contenteditable="true" onblur="updateCell('${p.id}','productName',this.innerText)" onkeydown="handleEnterKey(event)" title="${p.productName}">${p.productName}</td>
                 <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','costPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.costPrice).toLocaleString()}</td>
                 <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','sellPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.sellPrice).toLocaleString()}</td>
@@ -396,10 +380,7 @@
                 <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','closedPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.closedPrice).toLocaleString()}</td>
                 <td class="margin-cell" style="background:#fff5eb; color:#d35400;">${m2}%</td>
                 <td><a href="${p.productLink!=='-'?p.productLink:naverUrl}" target="_blank" style="text-decoration:none; font-size:18px;">🛒</a></td>
-                <td class="manage-area">
-                    <button class="note-icon ${hasNote?'active':''}" onclick="openProductNoteModal('${p.id}')">📝</button>
-                    <button class="del-icon" onclick="deleteProduct('${p.id}')">✕</button>
-                </td>
+                <td><button class="note-icon ${hasNote?'active':''}" onclick="openProductNoteModal('${p.id}')">📝</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -423,7 +404,7 @@
     function selectCompany(name, el){ currentSelectedCompany = name; document.querySelectorAll('.company-item').forEach(li=>li.classList.remove('active')); el.classList.add('active'); document.getElementById('currentViewTitle').innerText = name==='all'?"상품 통합 리스트":name; renderTable(); }
     function selectStatusFilter(status){ currentSelectedStatus = status; document.querySelectorAll('.filter-tab').forEach(btn=>btn.classList.remove('active')); document.querySelector(`.filter-tab[data-status="${status}"]`).classList.add('active'); renderTable(); }
 
-    function openAddProductModal(){ document.getElementById('addProductModal').style.display='block'; updateDatalists(); }
+    function openAddProductModal(){ document.getElementById('addProductModal').style.display='block'; }
     function closeAddProductModal(){ document.getElementById('addProductModal').style.display='none'; }
 
     function submitNewProduct(){
@@ -446,7 +427,7 @@
     function addCompanyPrompt(){
         const name = prompt("새로운 업체명을 입력하세요:");
         if(name && name.trim()){
-            if(companies.includes(name.trim())){ alert("이미 있는 업체입니다."); return; }
+            if(companies.includes(name.trim())){ alert("이미 등록된 업체입니다."); return; }
             companies.push(name.trim()); companies.sort(); renderSidebar();
         }
     }
@@ -476,12 +457,12 @@
         };
     }
 
-    function deleteProduct(id){ if(confirm("삭제하시겠습니까?")) fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"delete", id:id})}).then(()=>fetchDataFromSheets(true)); }
     function toggleSelectAll(m){ document.querySelectorAll('.row-checkbox').forEach(c=>c.checked=m.checked); }
     async function deleteSelectedProducts(){
         const checked = document.querySelectorAll('.row-checkbox:checked');
         if(checked.length===0) return;
-        if(confirm(checked.length+"개 상품을 삭제할까요?")){
+        if(confirm(checked.length+"개 상품을 정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
+            document.getElementById('syncStatus').innerText = "● Deleting...";
             for(let cb of checked){ const id = cb.closest('tr').getAttribute('data-id'); await fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"delete", id:id})}); }
             fetchDataFromSheets(true);
         }
