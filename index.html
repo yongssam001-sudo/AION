@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AION 상품 가격 관리 시스템 (최종 최적화 에디션)</title>
+  <title>AION 상품 가격 관리 시스템 (사이드바 복원 완료)</title>
   <style>
     :root {
       --primary-color: #4f46e5;
@@ -39,9 +39,9 @@
     }
     .login-box button:hover { background: var(--primary-hover); }
 
-    /* 💻 메인 대시보드 */
-    #mainContent { display: none; max-width: 1600px; margin: 0 auto; }
-    header { margin-bottom: 25px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; }
+    /* 💻 메인 대시보드 구조 */
+    #mainContent { display: none; max-width: 1700px; margin: 0 auto; }
+    header { margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; }
     header h1 { font-size: 24px; color: var(--primary-color); }
     
     .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
@@ -68,15 +68,32 @@
     .btn-secondary { background: #6b7280; color: white; }
     .btn-secondary:hover { background: #555b66; }
 
-    /* 📊 데이터 테이블 */
-    .table-container { background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1200px; }
+    /* 🗂️ 레이아웃 본문 (좌측 사이드바 + 우측 테이블 구조) */
+    .app-container { display: flex; gap: 20px; align-items: flex-start; }
+    
+    /* 🏢 1. 복원된 왼쪽 업체 사이드바 스타일 */
+    .sidebar {
+      width: 240px; min-width: 240px; background: white; border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .sidebar h3 { font-size: 15px; color: var(--text-main); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); }
+    .brand-list { list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 600px; overflow-y: auto; }
+    .brand-item {
+      padding: 8px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted);
+    }
+    .brand-item:hover { background-color: #f3f4f6; color: var(--primary-color); }
+    .brand-item.active { background-color: #eef2ff; color: var(--primary-color); font-weight: bold; border-left: 3px solid var(--primary-color); }
+
+    /* 📊 2. 우측 테이블 스타일 */
+    .table-container { flex: 1; background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1000px; }
     th, td { padding: 12px; border-bottom: 1px solid var(--border-color); }
     th { background-color: #f3f4f6; color: var(--text-muted); font-weight: bold; position: sticky; top: 0; }
     tr:hover { background-color: #f9fafb; }
     
     .prod-name {
-      max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       color: #2563eb; cursor: pointer; text-decoration: none; font-weight: 500;
     }
     .prod-name:hover { text-decoration: underline; }
@@ -92,16 +109,13 @@
       animation: fadeIn 0.2s ease-out;
     }
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    
     .modal-content h3 { margin-bottom: 20px; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 18px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-    .form-group { display: flex; flex-direction: column; }
-    .form-group.full-width { grid-column: span 2; }
-    .form-group label { font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
-    .form-group input, .form-group select {
-      padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none;
-    }
-    .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); }
+    .form-grid .form-group { display: flex; flex-direction: column; }
+    .form-grid .form-group.full-width { grid-column: span 2; }
+    .form-grid label { font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
+    .form-grid input, .form-grid select { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none; }
+    .form-grid input:focus, .form-grid select:focus { border-color: var(--primary-color); }
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 18px; }
   </style>
 </head>
@@ -126,32 +140,42 @@
         <input type="text" id="searchInput" placeholder="검색어 입력 후 엔터키 또는 검색 버튼을 누르세요...">
         <button id="searchButton">🔍 검색</button>
       </div>
-      
       <div class="btn-group">
         <button class="btn btn-primary" id="openRegModalBtn">➕ 개별 상품 등록</button>
         <button class="btn btn-secondary" id="refreshBtn">🔄 새로고침</button>
       </div>
     </div>
 
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 5%">ID</th>
-            <th style="width: 8%">브랜드</th>
-            <th style="width: 11%">제조사</th>
-            <th style="width: 11%">사방넷코드</th>
-            <th style="width: 8%">공급상태</th>
-            <th style="width: 12%">모델명</th>
-            <th style="width: 21%">상품명 (네이버쇼핑 자동연동)</th>
-            <th style="width: 8%">공급가</th>
-            <th style="width: 8%">온라인판매가</th>
-            <th style="width: 8%">폐쇄몰판매가</th>
-          </tr>
-        </thead>
-        <tbody id="productTableBody">
-          </tbody>
-      </table>
+    <div class="app-container">
+      
+      <aside class="sidebar">
+        <h3>🏢 업체 목록</h3>
+        <ul class="brand-list" id="brandListId">
+          <li class="brand-item active" onclick="filterByBrand('')">전체보기</li>
+          </ul>
+      </aside>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%">ID</th>
+              <th style="width: 10%">브랜드</th>
+              <th style="width: 12%">제조사</th>
+              <th style="width: 12%">사방넷코드</th>
+              <th style="width: 10%">공급상태</th>
+              <th style="width: 12%">모델명</th>
+              <th style="width: 23%">상품명 (네이버쇼핑 자동연동)</th>
+              <th style="width: 8%">공급가</th>
+              <th style="width: 8%">온라인판매가</th>
+              <th style="width: 8%">폐쇄몰판매가</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -210,14 +234,15 @@
   </div>
 
   <script>
-    // 🌟 1단계에서 새로 배포 후 발급받은 '최신 구글 주소'를 꼭 여기에 교체해 넣으세요!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9TZyH_YzZLnUUGH2GHh5sKxgHOHGEBgor0P01kbuZQN64FvJaoeeHyPArysX4nx8r/exec";
-    const MASTER_PW = "2369"; // 로그인에 사용할 비밀번호 지정
+    // 🌟 중요: 1단계에서 새로 발급받은 '최신 구글 주소'를 여기에 교체해 넣으세요!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbze_-qROmYhXSZ4hxuaKs8dWaM6EoKXv-VljCnXhClkhU9OVlUx52AyviyDIf97Ns8A/exec";
+    const MASTER_PW = "2369"; 
 
     let cachedProducts = []; 
+    let selectedBrand = ""; // 현재 선택된 사이드바 브랜드 저장용 필터 변수
 
     // ==========================================
-    // 🔒 [기능 1] 로그인 제어 및 타이핑 렉 해결
+    // 🔒 [기능 1] 로그인 제어 (타이핑 렉 완전 해결)
     // ==========================================
     const passwordInput = document.getElementById('passwordInput');
     const loginButton = document.getElementById('loginButton');
@@ -228,8 +253,7 @@
     loginButton.addEventListener('click', processSystemLogin);
 
     function processSystemLogin() {
-      const userPassword = passwordInput.value;
-      if (userPassword === MASTER_PW) {
+      if (passwordInput.value === MASTER_PW) {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
         fetchDataFromServer(); 
@@ -241,55 +265,90 @@
     }
 
     // ==========================================
-    // 🔍 [기능 2] 검색 필터링 최적화 (단발성 실행)
+    // 🏢 [기능 2] 왼쪽 사이드바 업체 필터링 연동
+    // ==========================================
+    function filterByBrand(brandName) {
+      selectedBrand = brandName;
+      
+      // 사이드바 UI 활성화 효과 연동
+      const items = document.querySelectorAll('.brand-item');
+      items.forEach(item => {
+        if(item.textContent === (brandName === "" ? "전체보기" : brandName)) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      
+      // 검색창 리셋 후 복합 필터 실행
+      searchInput.value = ""; 
+      applyCombinedFilter("");
+    }
+
+    function renderSidebarBrands(brandsArray) {
+      const brandListUl = document.getElementById('brandListId');
+      // '전체보기'를 남겨두고 하단 초기화
+      brandListUl.innerHTML = `<li class="brand-item ${selectedBrand === "" ? "active" : ""}" onclick="filterByBrand('')">전체보기</li>`;
+      
+      brandsArray.forEach(brand => {
+        if(!brand) return;
+        const li = document.createElement('li');
+        li.className = `brand-item ${selectedBrand === brand ? "active" : ""}`;
+        li.textContent = brand;
+        li.onclick = () => filterByBrand(brand);
+        brandListUl.appendChild(li);
+      });
+    }
+
+    // ==========================================
+    // 🔍 [기능 3] 검색 및 업체 복합 필터링 파트 (렉 소멸)
     // ==========================================
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
 
     searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { executeTargetSearch(); }
+      if (e.key === 'Enter') { applyCombinedFilter(searchInput.value.trim().toLowerCase()); }
     });
-    searchButton.addEventListener('click', executeTargetSearch);
+    searchButton.addEventListener('click', () => {
+      applyCombinedFilter(searchInput.value.trim().toLowerCase());
+    });
 
-    function executeTargetSearch() {
-      const searchKeyword = searchInput.value.trim().toLowerCase();
-      
-      if (searchKeyword === "") {
-        renderMainTable(cachedProducts);
-        return;
+    // 사이드바 선택 값과 검색어 창 입력값을 조율하여 매끄럽게 렌더링
+    function applyCombinedFilter(keyword) {
+      let filtered = cachedProducts;
+
+      // 1. 사이드바 브랜드 필터링 선적용
+      if (selectedBrand !== "") {
+        filtered = filtered.filter(p => (p.brand || "") === selectedBrand);
       }
 
-      const filteredResult = cachedProducts.filter(item => {
-        return (item.brand || "").toLowerCase().includes(searchKeyword) ||
-               (item.company || "").toLowerCase().includes(searchKeyword) ||
-               (item.modelName || "").toLowerCase().includes(searchKeyword) ||
-               (item.productName || "").toLowerCase().includes(searchKeyword) ||
-               (item.sabangCode || "").toLowerCase().includes(searchKeyword);
-      });
+      // 2. 상단 검색어 입력 필터링 후속 적용
+      if (keyword !== "") {
+        filtered = filtered.filter(item => {
+          return (item.brand || "").toLowerCase().includes(keyword) ||
+                 (item.company || "").toLowerCase().includes(keyword) ||
+                 (item.modelName || "").toLowerCase().includes(keyword) ||
+                 (item.productName || "").toLowerCase().includes(keyword) ||
+                 (item.sabangCode || "").toLowerCase().includes(keyword);
+        });
+      }
 
-      renderMainTable(filteredResult);
+      renderMainTable(filtered);
     }
 
     // ==========================================
-    // 📥 [기능 3] 팝업 모달 폼 핸들링 및 추가 최적화
+    // 📥 [기능 4] 독립형 모달 팝업 폼 제어 영역
     // ==========================================
     const registerModal = document.getElementById('registerModal');
     const openRegModalBtn = document.getElementById('openRegModalBtn');
     const closeRegModalBtn = document.getElementById('closeRegModalBtn');
     const registerForm = document.getElementById('registerForm');
 
-    openRegModalBtn.addEventListener('click', () => {
-      registerForm.reset();
-      registerModal.style.display = 'flex';
-    });
-
-    closeRegModalBtn.addEventListener('click', () => {
-      registerModal.style.display = 'none';
-    });
+    openRegModalBtn.addEventListener('click', () => { registerForm.reset(); registerModal.style.display = 'flex'; });
+    closeRegModalBtn.addEventListener('click', () => { registerModal.style.display = 'none'; });
 
     registerForm.addEventListener('submit', function(e) {
       e.preventDefault(); 
-
       const payload = {
         brand: document.getElementById('regBrand').value.trim(),
         company: document.getElementById('regCompany').value.trim(),
@@ -303,8 +362,7 @@
       };
 
       const saveBtn = registerForm.querySelector('button[type="submit"]');
-      saveBtn.disabled = true;
-      saveBtn.innerText = "⏳ 구글 시트 등록 중...";
+      saveBtn.disabled = true; saveBtn.innerText = "⏳ 구글 시트 등록 중...";
 
       fetch(SCRIPT_URL, {
         method: "POST",
@@ -314,44 +372,47 @@
       .then(response => response.json())
       .then(resData => {
         if (resData.result === "success") {
-          alert("구글 스프레드시트에 새로운 상품이 완벽하게 저장되었습니다.");
+          alert("구글 스프레드시트에 상품이 성공적으로 저장되었습니다.");
           registerModal.style.display = 'none'; 
           
           payload.id = resData.id; 
           cachedProducts.push(payload);
-          appendRowIntoGrid(payload);
+          
+          // 새 브랜드가 추가되었을 수 있으므로 사이드바 갱신 연산 실행
+          const updatedBrands = [...new Set(cachedProducts.map(p => p.brand).filter(b => b !== ""))];
+          renderSidebarBrands(updatedBrands);
+          
+          applyCombinedFilter(searchInput.value.trim().toLowerCase()); // 화면 리스트 업데이트
         } else {
-          alert("구글 시트 저장 처리 실패: " + resData.message);
+          alert("구글 시트 저장 실패: " + resData.message);
         }
       })
-      .catch(error => alert("네트워크 통신 오류가 발생했습니다: " + error))
-      .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerText = "💾 시트 저장하기";
-      });
+      .catch(error => alert("통신망 오류가 발생했습니다: " + error))
+      .finally(() => { saveBtn.disabled = false; saveBtn.innerText = "💾 시트 저장하기"; });
     });
 
     // ==========================================
-    // 📊 [기능 4] 백엔드 수신 및 렌더링
+    // 📊 [기능 5] 서버 비동기 수신 및 렌더링 영역
     // ==========================================
     document.getElementById('refreshBtn').addEventListener('click', fetchDataFromServer);
 
     function fetchDataFromServer() {
       const tbody = document.getElementById('productTableBody');
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:40px; font-weight:bold; color:var(--primary-color);">구글 클라우드에서 최신 데이터를 연동하여 불러오는 중입니다...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:40px; font-weight:bold; color:var(--primary-color);">구글 스프레드시트 서버와 교차 검증 및 데이터 로딩 중...</td></tr>`;
       
       fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
           if (data.result === "success") {
             cachedProducts = data.products || [];
-            renderMainTable(cachedProducts);
+            renderSidebarBrands(data.brands || []); // 사이드바 업체 주입
+            renderMainTable(cachedProducts); // 테이블 주입
           } else {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px; font-weight:bold;">데이터 파싱 에러: ${data.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px;">데이터 수신 실패: ${data.message}</td></tr>`;
           }
         })
         .catch(err => {
-          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px; font-weight:bold;">서버 통신 실패: 구글 앱스 스크립트 배포 주소를 체크하세요.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px;">CORS 보안 거부 혹은 주소 오류입니다. 구글 배포를 점검하세요.</td></tr>`;
         });
     }
 
@@ -359,7 +420,7 @@
       const tbody = document.getElementById('productTableBody');
       tbody.innerHTML = "";
       if (productsArray.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">조건에 부합하는 일치 상품 정보가 없습니다.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">조회 조건에 부합하는 상품 정보가 비어있습니다.</td></tr>`;
         return;
       }
       productsArray.forEach(item => appendRowIntoGrid(item));
@@ -380,7 +441,7 @@
         <td><span style="font-weight:bold; color:${statusColor}">${item.status || '공급중'}</span></td>
         <td>${item.modelName || ''}</td>
         <td><div class="prod-name" onclick="window.open('${targetShoppingUrl}', '_blank')" title="클릭 시 네이버쇼핑 자동 검색">${item.productName || ''}</div></td>
-        <td style="color:#4b5563;">${Number(item.costPrice || 0).toLocaleString()}원</td>
+        <td style="color:#6b7280;">${Number(item.costPrice || 0).toLocaleString()}원</td>
         <td style="font-weight:bold; color:var(--primary-color);">${Number(item.sellPrice || 0).toLocaleString()}원</td>
         <td style="font-weight:bold; color:#7c3aed;">${Number(item.closedPrice || 0).toLocaleString()}원</td>
       `;
