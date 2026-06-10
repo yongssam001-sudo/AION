@@ -207,7 +207,6 @@
     </div>
 </div>
 
-<!-- 업체 메모 모달 -->
 <div id="companyNoteModal" class="modal">
     <div class="modal-content" style="width: 500px;">
         <div class="modal-header"><h3 id="compNoteTitle">업체 특이사항</h3></div>
@@ -225,7 +224,6 @@
     </div>
 </div>
 
-<!-- 제품 메모 모달 -->
 <div id="productNoteModal" class="modal">
     <div class="modal-content" style="width: 500px;">
         <div class="modal-header"><h3 id="prodNoteTitle">제품 개별 메모</h3></div>
@@ -243,7 +241,6 @@
     </div>
 </div>
 
-<!-- 상품 등록 모달 (타이핑 방식 복구) -->
 <div id="addProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h3>✨ 신규 상품 등록</h3></div>
@@ -274,7 +271,6 @@
     </div>
 </div>
 
-<!-- 마진 분석 패널 -->
 <div id="calcPanel" class="side-panel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
         <h2 style="margin:0;">📊 마진 분석기</h2>
@@ -297,18 +293,24 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyAFS0c7EBldhvpwzHpl0FSNQpLCqOx5ChSKOqqGMp-5xGt5K87JbPbtHaxKm4wit3/exec";
+    // ★ 주의: 아래 URL을 '새 배포'로 생성된 신규 웹앱 URL로 반드시 교체하세요.
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0acGD2g5B2J8UPNsC_ai9LueXyTCsrgeD0Saxlblh5LpbRuCu2ufsg2_wCZl6Q_gv/exec";
     let products=[], companies=[], companyNotes={}, currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveProdId='', ActiveCompName='';
 
     window.onload = function() {
-        if(sessionStorage.getItem("aion_auth_v8")==="true") document.getElementById("authOverlay").style.display="none";
+        // v10으로 세션 키값 업데이트
+        if(sessionStorage.getItem("aion_auth_v10")==="true") document.getElementById("authOverlay").style.display="none";
         fetchDataFromSheets();
     };
 
     function verifySystemPassword() {
         const input = document.getElementById("sysPasswordInput").value;
         fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
-            if(input === String(data.serverPassword || "2369")){ sessionStorage.setItem("aion_auth_v8","true"); document.getElementById("authOverlay").style.display="none"; }
+            if(input === String(data.serverPassword || "2369")){ 
+                // v10으로 세션 키값 업데이트
+                sessionStorage.setItem("aion_auth_v10","true"); 
+                document.getElementById("authOverlay").style.display="none"; 
+            }
             else { document.getElementById("authErrorMsg").innerText = "비밀번호가 틀렸습니다."; }
         });
     }
@@ -354,8 +356,11 @@
 
         filtered.forEach((p, idx)=>{
             const tr = document.createElement('tr'); tr.setAttribute('data-id', p.id);
-            const m1 = p.sellPrice > 0 ? (((p.sellPrice/1.1 - p.costPrice/1.1) / (p.sellPrice/1.1)) * 100).toFixed(1) : '0';
-            const m2 = p.closedPrice > 0 ? (((p.closedPrice/1.1 - p.costPrice/1.1) / (p.closedPrice/1.1)) * 100).toFixed(1) : '0';
+            
+            // ★ 마진율 계산식 최적화 (1.1 나눗셈 생략)
+            const m1 = p.sellPrice > 0 ? (((p.sellPrice - p.costPrice) / p.sellPrice) * 100).toFixed(1) : '0';
+            const m2 = p.closedPrice > 0 ? (((p.closedPrice - p.costPrice) / p.closedPrice) * 100).toFixed(1) : '0';
+            
             const hasNote = p.note && p.note !== '-';
             const naverUrl = "https://search.shopping.naver.com/search/all?query=" + encodeURIComponent(p.modelName || p.productName);
 
@@ -458,12 +463,22 @@
     }
 
     function toggleSelectAll(m){ document.querySelectorAll('.row-checkbox').forEach(c=>c.checked=m.checked); }
+    
+    // ★ 일괄 삭제(Batch Delete) 적용: 여러 개를 한 번의 fetch 요청으로 처리
     async function deleteSelectedProducts(){
         const checked = document.querySelectorAll('.row-checkbox:checked');
-        if(checked.length===0) return;
-        if(confirm(checked.length+"개 상품을 정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
+        if(checked.length === 0) return;
+        
+        if(confirm(checked.length + "개 상품을 정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")){
             document.getElementById('syncStatus').innerText = "● Deleting...";
-            for(let cb of checked){ const id = cb.closest('tr').getAttribute('data-id'); await fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"delete", id:id})}); }
+            
+            const ids = Array.from(checked).map(cb => cb.closest('tr').getAttribute('data-id'));
+            
+            await fetch(GAS_WEB_APP_URL, {
+                method: "POST", 
+                body: JSON.stringify({ action: "batchDelete", ids: ids })
+            });
+            
             fetchDataFromSheets(true);
         }
     }
@@ -488,6 +503,7 @@
         const ws = XLSX.utils.aoa_to_sheet(data); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, "AION_Backup.xlsx");
     }
+    
     function uploadTemplateXLSX(input){
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
