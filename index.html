@@ -294,7 +294,7 @@
 
 <script>
     // ★ 주의: 아래 URL을 '새 배포'로 생성된 신규 웹앱 URL로 반드시 교체하세요.
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0acGD2g5B2J8UPNsC_ai9LueXyTCsrgeD0Saxlblh5LpbRuCu2ufsg2_wCZl6Q_gv/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwAsBdWC6MMJzkqk3GfakEGnhGe8BEqND7XVX38DANN1dnclg1u-2LnXm7NVmtFtIvq/exec";
     let products=[], companies=[], companyNotes={}, currentSelectedCompany='all', currentSelectedStatus='all', currentSearchKeyword='', ActiveProdId='', ActiveCompName='';
 
     window.onload = function() {
@@ -317,7 +317,8 @@
 
     function fetchDataFromSheets(manual=false){
         if(manual) document.getElementById('syncStatus').innerText = "● Syncing...";
-        fetch(GAS_WEB_APP_URL).then(res=>res.json()).then(data=>{
+        const url = manual ? GAS_WEB_APP_URL + "?refresh=true" : GAS_WEB_APP_URL;
+        fetch(url).then(res=>res.json()).then(data=>{
             products = data.products || [];
             companyNotes = data.companyNotes || {};
             companies = [...new Set(products.map(p=>p.company).filter(c=>c&&c!=='-'))].sort();
@@ -379,10 +380,10 @@
                 </td>
                 <td style="font-weight:700;" contenteditable="true" onblur="updateCell('${p.id}','modelName',this.innerText)" onkeydown="handleEnterKey(event)">${p.modelName}</td>
                 <td class="name-cell" contenteditable="true" onblur="updateCell('${p.id}','productName',this.innerText)" onkeydown="handleEnterKey(event)" title="${p.productName}">${p.productName}</td>
-                <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','costPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.costPrice).toLocaleString()}</td>
-                <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','sellPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.sellPrice).toLocaleString()}</td>
+                <td class="price-cell" contenteditable="true" data-field="costPrice" onfocus="onPriceFocus(this)" onblur="updateCell('${p.id}','costPrice',this.innerText); this.innerText=Number(this.innerText.replace(/,/g,'')||0).toLocaleString()" onkeydown="handleEnterKey(event)">${Number(p.costPrice).toLocaleString()}</td>
+                <td class="price-cell" contenteditable="true" data-field="sellPrice" onfocus="onPriceFocus(this)" onblur="updateCell('${p.id}','sellPrice',this.innerText); this.innerText=Number(this.innerText.replace(/,/g,'')||0).toLocaleString()" onkeydown="handleEnterKey(event)">${Number(p.sellPrice).toLocaleString()}</td>
                 <td class="margin-cell">${m1}%</td>
-                <td class="price-cell" contenteditable="true" onblur="updateCell('${p.id}','closedPrice',this.innerText)" onkeydown="handleEnterKey(event)">${Number(p.closedPrice).toLocaleString()}</td>
+                <td class="price-cell" contenteditable="true" data-field="closedPrice" onfocus="onPriceFocus(this)" onblur="updateCell('${p.id}','closedPrice',this.innerText); this.innerText=Number(this.innerText.replace(/,/g,'')||0).toLocaleString()" onkeydown="handleEnterKey(event)">${Number(p.closedPrice).toLocaleString()}</td>
                 <td class="margin-cell" style="background:#fff5eb; color:#d35400;">${m2}%</td>
                 <td><a href="${p.productLink!=='-'?p.productLink:naverUrl}" target="_blank" style="text-decoration:none; font-size:18px;">🛒</a></td>
                 <td><button class="note-icon ${hasNote?'active':''}" onclick="openProductNoteModal('${p.id}')">📝</button></td>
@@ -392,17 +393,72 @@
     }
 
     function handleEnterKey(e) { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }
-    
+
+    // ★ 가격 셀 포커스 시 콤마 제거, 포커스 아웃 시 콤마 복원
+    function onPriceFocus(el) {
+        el.innerText = el.innerText.replace(/,/g, '');
+        // 커서를 끝으로 이동
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    // ★ 디바운스 맵: 셀별로 타이머 관리
+    const _debounceTimers = {};
+
     function updateCell(id, field, value){
         let finalVal = value.replace(/,/g, '').trim();
-        if(['costPrice','sellPrice','closedPrice','consumerPrice'].includes(field)) finalVal = Number(finalVal) || 0;
+        const isPriceField = ['costPrice','sellPrice','closedPrice','consumerPrice'].includes(field);
+        if(isPriceField) finalVal = Number(finalVal) || 0;
+
         const idx = products.findIndex(p=>String(p.id)===String(id));
-        if(idx!==-1 && String(products[idx][field]) !== String(finalVal)){
-            products[idx][field] = finalVal;
-            document.getElementById('syncStatus').innerText = "● Saving...";
-            fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"update", id:id, field:field, value:finalVal})})
-            .then(()=> { document.getElementById('syncStatus').innerText = "● Connected"; renderTable(); });
+        if(idx === -1 || String(products[idx][field]) === String(finalVal)) return;
+
+        // 로컬 데이터 즉시 업데이트
+        products[idx][field] = finalVal;
+
+        // ★ 마진율만 DOM에서 직접 교체 (테이블 전체 재렌더 없음)
+        const tr = document.querySelector(`tr[data-id="${id}"]`);
+        if(tr) {
+            const p = products[idx];
+            if(field === 'sellPrice' || field === 'costPrice') {
+                const m1 = p.sellPrice > 0 ? (((p.sellPrice - p.costPrice) / p.sellPrice) * 100).toFixed(1) : '0';
+                const marginCells = tr.querySelectorAll('.margin-cell');
+                if(marginCells[0]) marginCells[0].innerText = m1 + '%';
+            }
+            if(field === 'closedPrice' || field === 'costPrice') {
+                const m2 = p.closedPrice > 0 ? (((p.closedPrice - p.costPrice) / p.closedPrice) * 100).toFixed(1) : '0';
+                const marginCells = tr.querySelectorAll('.margin-cell');
+                if(marginCells[1]) marginCells[1].innerText = m2 + '%';
+            }
+            // 가격 셀 포커스 아웃 후 콤마 포맷 표시
+            if(isPriceField) {
+                const activeEl = document.activeElement;
+                if(activeEl && activeEl !== tr.querySelector(`[data-field="${field}"]`)) {
+                    // blur된 셀에 콤마 포맷 적용 (현재 포커스된 셀 제외)
+                }
+            }
         }
+
+        // ★ 디바운싱: 300ms 후 저장 (연속 입력 시 마지막만 저장)
+        const timerKey = id + '_' + field;
+        clearTimeout(_debounceTimers[timerKey]);
+        document.getElementById('syncStatus').innerText = "● 저장 대기중...";
+
+        _debounceTimers[timerKey] = setTimeout(() => {
+            document.getElementById('syncStatus').innerText = "● Saving...";
+            fetch(GAS_WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({action:"update", id:id, field:field, value:finalVal})
+            }).then(res => res.json()).then(() => {
+                document.getElementById('syncStatus').innerText = "● Connected";
+            }).catch(() => {
+                document.getElementById('syncStatus').innerText = "● 저장 실패 (재시도 필요)";
+            });
+        }, 300);
     }
 
     function executeSearch() { currentSearchKeyword = document.getElementById('searchInput').value.trim(); renderTable(); }
@@ -426,7 +482,7 @@
             note: document.getElementById('new_note').value.trim() || "-",
             sabangCode: "SB-"+Date.now().toString().slice(-6), productLink: "-"
         };
-        fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"add", product:p})}).then(()=> { closeAddProductModal(); fetchDataFromSheets(true); });
+        fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"add", product:p})}).then(r=>r.json()).then(()=> { closeAddProductModal(); fetchDataFromSheets(true); });
     }
 
     function addCompanyPrompt(){
@@ -446,7 +502,10 @@
     }
     function saveCompanyNote(){
         const val = document.getElementById('compNoteInput').value.trim();
-        fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"updateCompanyNote", company:ActiveCompName, note:val})}).then(()=>{ document.getElementById('companyNoteModal').style.display='none'; fetchDataFromSheets(true); });
+        companyNotes[ActiveCompName] = val;
+        document.getElementById('compNoteDisplay').innerText = val || "등록된 업체 메모가 없습니다.";
+        document.getElementById('companyNoteModal').style.display='none';
+        fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"updateCompanyNote", company:ActiveCompName, note:val})});
     }
 
     function openProductNoteModal(id){
@@ -458,7 +517,18 @@
         document.getElementById('productNoteModal').style.display = 'block';
         document.getElementById('btnSaveProdNote').onclick = () => {
             const val = document.getElementById('prodNoteInput').value.trim() || '-';
-            fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"update", id:id, field:"note", value:val})}).then(()=>{ document.getElementById('productNoteModal').style.display='none'; fetchDataFromSheets(true); });
+            const idx = products.findIndex(item=>String(item.id)===String(id));
+            if(idx !== -1) products[idx].note = val;
+            document.getElementById('productNoteModal').style.display='none';
+            // 메모 아이콘 상태 업데이트
+            const tr = document.querySelector(`tr[data-id="${id}"]`);
+            if(tr) {
+                const noteBtn = tr.querySelector('.note-icon');
+                if(noteBtn) {
+                    noteBtn.classList.toggle('active', val !== '-');
+                }
+            }
+            fetch(GAS_WEB_APP_URL, {method:"POST", body:JSON.stringify({action:"update", id:id, field:"note", value:val})});
         };
     }
 
